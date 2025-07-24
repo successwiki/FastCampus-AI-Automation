@@ -1,0 +1,1019 @@
+{
+  "name": "이메일 자동화",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "id": "bf88423e-35fa-4f4b-a831-ef948a52a8fe",
+      "name": "Get Email Details",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        680,
+        -80
+      ],
+      "notesInFlow": true,
+      "webhookId": "3a52d4f4-e056-4ab2-b09e-a1afbe48e797",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FpAOSM1d6pRwc8pe",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "🔵 2강: 이메일 전체 내용 가져오기\n출력: payload, headers, body"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 실제 이메일 데이터 구조에 맞춘 정제 코드\nconst emailData = $input.item.json;\n\n// HTML 태그 제거 및 텍스트 정제 함수\nfunction cleanText(content) {\n  if (!content) return '';\n  \n  let cleaned = content;\n  \n  // HTML 엔티티 디코딩\n  cleaned = cleaned\n    .replace(/&#x([0-9A-F]+);/gi, (match, hex) => String.fromCharCode(parseInt(hex, 16)))\n    .replace(/&#([0-9]+);/g, (match, dec) => String.fromCharCode(parseInt(dec, 10)))\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&apos;/g, \"'\");\n  \n  // HTML 태그 제거\n  cleaned = cleaned.replace(/<[^>]*>/g, '');\n  \n  // 연속된 공백을 하나로\n  cleaned = cleaned.replace(/\\s+/g, ' ');\n  \n  // 연속된 줄바꿈을 최대 2개로 제한\n  cleaned = cleaned.replace(/\\n\\s*\\n\\s*\\n+/g, '\\n\\n');\n  \n  // 앞뒤 공백 제거\n  cleaned = cleaned.trim();\n  \n  return cleaned;\n}\n\n// URL 추출 함수\nfunction extractUrls(text) {\n  if (!text) return [];\n  const urlRegex = /https?:\\/\\/[^\\s<>\"]+/gi;\n  return text.match(urlRegex) || [];\n}\n\n// 이메일 주소 정제\nfunction parseEmailInfo(emailObj) {\n  if (!emailObj || !emailObj.value || !emailObj.value[0]) {\n    return { email: '', name: '', domain: '' };\n  }\n  \n  const emailInfo = emailObj.value[0];\n  const email = emailInfo.address || '';\n  const name = emailInfo.name || '';\n  const domain = email.split('@')[1] || '';\n  \n  return { email, name, domain };\n}\n\n// 제목 정제 (Base64 디코딩된 상태)\nconst subject = cleanText(emailData.subject || '');\nconst subjectClean = subject.replace(/^(RE:|FW:|답변:|전달:|Re:|Fwd:)\\s*/i, '');\n\n// 발신자/수신자 정보 파싱\nconst fromInfo = parseEmailInfo(emailData.from);\nconst toInfo = parseEmailInfo(emailData.to);\n\n// 본문 내용 정제 (text 우선, 없으면 textAsHtml)\nlet bodyContent = '';\nif (emailData.text) {\n  bodyContent = cleanText(emailData.text);\n} else if (emailData.textAsHtml) {\n  bodyContent = cleanText(emailData.textAsHtml);\n} else if (emailData.html) {\n  bodyContent = cleanText(emailData.html);\n}\n\n// [image: xxx] 같은 텍스트 제거\nbodyContent = bodyContent.replace(/\\[image:\\s*[^\\]]*\\]/gi, '');\n\n// 링크 URL들만 남기고 < > 제거\nbodyContent = bodyContent.replace(/<(https?:\\/\\/[^>]+)>/g, '$1');\n\n// 날짜 파싱\nlet parsedDate = '';\nlet timestamp = '';\nif (emailData.date) {\n  try {\n    const date = new Date(emailData.date);\n    parsedDate = date.toLocaleString('ko-KR', {\n      year: 'numeric',\n      month: '2-digit', \n      day: '2-digit',\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n    timestamp = date.toISOString();\n  } catch (e) {\n    parsedDate = emailData.date;\n    timestamp = new Date().toISOString();\n  }\n}\n\n// URL 추출\nconst urls = extractUrls(bodyContent);\n\n// 키워드 추출 (3글자 이상 한글, 영문 단어)\nconst keywords = [];\nif (bodyContent) {\n  const words = bodyContent.match(/[가-힣]{2,}|[a-zA-Z]{3,}/g) || [];\n  const wordCount = {};\n  \n  words.forEach(word => {\n    const lower = word.toLowerCase();\n    if (lower.length > 2 && !/^(the|and|for|are|but|not|you|all|can|had|her|was|one|our|out|day|get|has|him|his|how|its|may|new|now|old|see|two|way|who|boy|did|man|end|say|she|use|each|make|most|over|said|some|time|very|what|with|have|from|they|know|want|been|good|much|some|time|will|year|your|when|come|could|there|first|after|back|other|great|take|before)$/.test(lower)) {\n      wordCount[lower] = (wordCount[lower] || 0) + 1;\n    }\n  });\n  \n  keywords.push(...Object.entries(wordCount)\n    .sort(([,a], [,b]) => b - a)\n    .slice(0, 5)\n    .map(([word]) => word));\n}\n\n// 이메일 유형 판단\nlet emailType = 'general';\nif (fromInfo.domain.includes('google.com') || fromInfo.domain.includes('accounts.google')) {\n  emailType = 'google_security';\n} else if (bodyContent.includes('알림') || bodyContent.includes('notification')) {\n  emailType = 'notification';\n} else if (bodyContent.includes('광고') || bodyContent.includes('마케팅') || bodyContent.includes('unsubscribe')) {\n  emailType = 'marketing';\n}\n\n// 보안 관련 키워드 체크\nconst securityKeywords = ['보안', '액세스', '로그인', '계정', '권한', '활동', '확인', 'security', 'access', 'login', 'account'];\nconst isSecurityRelated = securityKeywords.some(keyword => \n  subject.toLowerCase().includes(keyword) || bodyContent.toLowerCase().includes(keyword)\n);\n\n// 내용 요약 생성\nconst contentSummary = bodyContent.length > 150 \n  ? bodyContent.substring(0, 150) + '...' \n  : bodyContent;\n\n// 정제된 최종 데이터 반환\nreturn {\n  // === 기본 식별 정보 ===\n  messageId: emailData.messageId || emailData.id || '',\n  threadId: emailData.threadId || '',\n  \n  // === 정제된 제목 ===\n  subject: subject,\n  subjectClean: subjectClean,\n  \n  // === 발신자 정보 ===\n  senderEmail: fromInfo.email,\n  senderName: fromInfo.name || fromInfo.email,\n  senderDomain: fromInfo.domain,\n  \n  // === 수신자 정보 ===\n  recipientEmail: toInfo.email,\n  recipientName: toInfo.name || toInfo.email,\n  \n  // === 날짜 정보 ===\n  date: parsedDate,\n  dateISO: timestamp,\n  dateOriginal: emailData.date,\n  \n  // === 정제된 내용 ===\n  content: bodyContent,\n  contentSummary: contentSummary,\n  contentLength: bodyContent.length,\n  \n  // === 추출된 정보 ===\n  urls: urls,\n  urlCount: urls.length,\n  keywords: keywords,\n  \n  // === 분류 정보 ===\n  emailType: emailType,\n  isSecurityRelated: isSecurityRelated,\n  hasLinks: urls.length > 0,\n  \n  // === 메타데이터 ===\n  sizeEstimate: emailData.sizeEstimate || 0,\n  hasHtml: !!emailData.html,\n  hasText: !!emailData.text,\n  \n  // === 원본 데이터 (필요시) ===\n  _rawSubject: emailData.subject,\n  _rawHeaders: emailData.headers,\n  _processedAt: new Date().toISOString()\n};"
+      },
+      "id": "f3bc1f30-2f16-4748-9cfa-39a36768c85f",
+      "name": "Parse Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -80
+      ],
+      "notesInFlow": true,
+      "notes": "🟡 이메일 데이터 정제\n출력:\n- messageId\n- threadId\n- subject\n- from\n- senderEmail\n- senderName\n- body (디코딩됨)\n- date\n- labels"
+    },
+    {
+      "parameters": {
+        "content": "## 📊 이메일 분석 파이프라인\n\n1. **Gmail Trigger**: 새 이메일 ID만 제공\n2. **Get Email Details**: 전체 이메일 데이터 가져옴\n3. **Parse Email Data**: 헤더와 본문을 파싱하여 구조화\n4. **AI Agent**: 파싱된 데이터를 분석",
+        "height": 180,
+        "width": 400,
+        "color": 4
+      },
+      "id": "d58e13c1-5d20-4081-a542-55a3bfce3f9e",
+      "name": "Sticky Note - Data Flow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "17643d24-3eaa-41ea-8614-37fbca23eb9a",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        200
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "i2ko7n62147IgBPO",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "==== 이메일 분석 작업 ===\n\n다음 이메일을 분석하고 JSON 형식으로 결과를 반환하세요.\n\n**이메일 정보:**\n- 발신자: {{ $('Parse Email Data').item.json.senderName }} ({{ $('Parse Email Data').item.json.senderEmail }})\n- 수신자: {{ $('Parse Email Data').item.json.recipientEmail }}\n- 제목: {{ $('Parse Email Data').item.json.subject }}\n- 정제된 제목: {{ $('Parse Email Data').item.json.subjectClean }}\n- 날짜: {{ $('Parse Email Data').item.json.date }}\n- 이메일 유형: {{ $('Parse Email Data').item.json.emailType }}\n- 보안 관련: {{ $('Parse Email Data').item.json.isSecurityRelated }}\n\n**본문 내용:**\n{{ $('Parse Email Data').item.json.content }}\n\n**요약:**\n{{ $('Parse Email Data').item.json.contentSummary }}\n\n**추출된 키워드:**\n{{ $('Parse Email Data').item.json.keywords }}\n\n**포함된 URL:**\n{{ $('Parse Email Data').item.json.urls }}\n\n---\n\n**분석 항목:**\n\n1. **의도** (이메일 의도)\n   - 문의: 일반 문의/질문\n   - 불만: 불만/컴플레인\n   - 요청: 요청사항/부탁\n   - 정보공유: 정보 공유/알림\n   - 피드백: 피드백/의견\n   - 보안: 보안 관련 알림\n   - 마케팅: 마케팅/광고\n   \n2. **긴급도** (처리 긴급도)\n   - 높음: 즉시 처리 필요 (24시간 이내)\n   - 보통: 빠른 처리 필요 (3일 이내)\n   - 낮음: 일반 처리 (1주일 이내)\n   \n3. **감정** (감정 분석)\n   - 긍정적: 긍정적/우호적\n   - 중립적: 중립적/사실적\n   - 부정적: 부정적/불만족\n   \n4. **카테고리** (업무 카테고리)\n   - 고객지원: 고객지원\n   - 영업: 영업/구매문의\n   - 기술지원: 기술지원\n   - 보안: 보안/계정\n   - 마케팅: 마케팅/홍보\n   - 내부업무: 내부업무\n   - 일반문의: 일반문의\n   \n5. **우선순위** (우선순위)\n   - 긴급: 긴급 대응 필요\n   - 높음: 높음\n   - 보통: 보통\n   - 낮음: 낮음\n   \n6. **키워드** (주요 키워드)\n   - 이메일에서 가장 중요한 키워드 3-5개를 배열로\n   \n7. **답장필요** (답장 필요 여부 판단)\n   다음 기준에 따라 true/false로 판단하세요:\n   \n   **답장이 필요한 경우 (true):**\n   - 질문이나 문의가 포함된 경우\n   - 요청사항이나 부탁이 있는 경우\n   - 불만이나 문제 해결이 필요한 경우\n   - 확인이나 승인을 요구하는 경우\n   - 피드백이나 의견을 구하는 경우\n   - 개인적인 발신자(no-reply가 아닌)의 비즈니스 이메일\n   - 고객지원, 영업, 기술지원 관련 문의\n   \n   **답장이 불필요한 경우 (false):**\n   - 단순 정보 알림이나 공지사항\n   - 시스템 자동 생성 이메일 (no-reply 주소)\n   - 마케팅/광고성 이메일\n   - 뉴스레터나 업데이트 알림\n   - 보안 알림 중 단순 정보 제공용\n   - 배송 알림, 결제 확인 등 트랜잭션 알림\n   - 발신자가 \"no-reply\", \"noreply\", \"donotreply\" 등인 경우\n   \n8. **조치사항** (필요한 조치사항)\n   - 구체적인 액션 아이템들을 배열로 (최대 3개)\n   - 예: [\"계정 보안 확인\", \"비밀번호 변경\", \"고객센터 연락\"]\n   \n9. **요약** (핵심 요약)\n   - 이메일의 핵심 내용을 1-2문장으로 요약\n   \n10. **위험도** (위험도 평가)\n    - 높음: 보안 위협, 긴급 문제\n    - 보통: 일반적인 이슈\n    - 낮음: 단순 정보\n\n**출력 형식:**\n```json\n{\n  \"의도\": \"string\",\n  \"긴급도\": \"string\", \n  \"감정\": \"string\",\n  \"카테고리\": \"string\",\n  \"우선순위\": \"string\",\n  \"키워드\": [\"키워드1\", \"키워드2\", \"키워드3\"],\n  \"답장필요\": boolean,\n  \"조치사항\": [\"조치1\", \"조치2\", \"조치3\"],\n  \"요약\": \"string\",\n  \"위험도\": \"string\"\n}\n```\n\n**중요 지침:**\n1. 발신자 이메일 주소를 반드시 확인하세요. \"no-reply\", \"noreply\", \"donotreply\" 등이 포함된 주소는 일반적으로 답장이 불필요합니다.\n2. 이메일의 실제 목적과 내용을 정확히 파악하여 분류하세요.\n3. 한국어와 영어를 모두 정확히 분석할 수 있어야 합니다.\n4. 감정 분석 시 문맥을 정확히 파악하고, 카테고리 분류는 이메일의 주요 목적에 따라 결정하세요.\n5. JSON만 반환하고 다른 설명이나 마크다운은 포함하지 마세요.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 전문적인 이메일 분석 AI 비서입니다. 이메일의 내용을 정확히 분석하고 비즈니스 관점에서 중요한 정보를 추출하는 것이 목표입니다. 항상 지정된 JSON 스키마에 맞춰 구조화된 응답을 제공하세요. 감정 분석 시 문맥을 정확히 파악하고, 카테고리 분류는 이메일의 주요 목적에 따라 결정하세요. 한국어와 영어를 모두 정확히 분석할 수 있어야 합니다."
+        }
+      },
+      "id": "43771080-1f97-48e6-b537-8f9e08b0c309",
+      "name": "AI Email Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        1180,
+        -80
+      ],
+      "notesInFlow": true,
+      "notes": "🔴 AI 이메일 분석\n출력 JSON:\n- intent\n- urgency\n- sentiment\n- category\n- keywords[]\n- requiresReply\n- summary"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"의도\": {\n      \"type\": \"string\",\n      \"enum\": [\"문의\", \"불만\", \"요청\", \"정보공유\", \"피드백\", \"보안\", \"마케팅\"],\n      \"description\": \"이메일의 주요 의도\"\n    },\n    \"긴급도\": {\n      \"type\": \"string\",\n      \"enum\": [\"높음\", \"보통\", \"낮음\"],\n      \"description\": \"처리 긴급도\"\n    },\n    \"감정\": {\n      \"type\": \"string\",\n      \"enum\": [\"긍정적\", \"중립적\", \"부정적\"],\n      \"description\": \"이메일의 감정 톤\"\n    },\n    \"카테고리\": {\n      \"type\": \"string\",\n      \"enum\": [\"고객지원\", \"영업\", \"기술지원\", \"보안\", \"마케팅\", \"내부업무\", \"일반문의\"],\n      \"description\": \"업무 카테고리\"\n    },\n    \"우선순위\": {\n      \"type\": \"string\",\n      \"enum\": [\"긴급\", \"높음\", \"보통\", \"낮음\"],\n      \"description\": \"우선순위\"\n    },\n    \"키워드\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"minItems\": 3,\n      \"maxItems\": 5,\n      \"description\": \"주요 키워드 3-5개\"\n    },\n    \"답장필요\": {\n      \"type\": \"boolean\",\n      \"description\": \"답장 필요 여부\"\n    },\n    \"조치사항\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"maxItems\": 3,\n      \"description\": \"필요한 조치사항\"\n    },\n    \"요약\": {\n      \"type\": \"string\",\n      \"description\": \"이메일 핵심 요약\"\n    },\n    \"위험도\": {\n      \"type\": \"string\",\n      \"enum\": [\"높음\", \"보통\", \"낮음\"],\n      \"description\": \"위험도 평가\"\n    }\n  },\n  \"required\": [\"의도\", \"긴급도\", \"감정\", \"카테고리\", \"우선순위\", \"키워드\", \"답장필요\", \"조치사항\", \"요약\", \"위험도\"]\n}"
+      },
+      "id": "3ef33897-da8e-4f2c-aa13-d0b471db9478",
+      "name": "JSON Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1400,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 이전 노드들의 데이터 통합 (한글 필드명 사용)\nconst emailData = $('Parse Email Data').item.json;\nconst analysisData = $('AI Email Analyzer').item.json.output;\n\n// 사용 가능한 톤 목록 정의 (Airtable에 실제 존재하는 톤들)\nconst availableTones = [\n  '정보제공형', '공감형', '열정적', '전문가형', '캐주얼', \n  '전문적', '감사형', '도움형', '컨설팅형', '매력적'\n];\n\n// 카테고리별 기본 톤 매핑 (폴백용)\nconst defaultToneByCategory = {\n  '보안': '정보제공형',\n  '고객지원': '도움형', \n  '영업': '전문적',\n  '기술지원': '전문가형',\n  '마케팅': '매력적',\n  '내부업무': '전문적',\n  '일반문의': '전문적'\n};\n\n// 실제 존재하는 카테고리 + 톤 조합 (Airtable 기준)\nconst existingCombinations = [\n  '보안_정보제공형', '보안_전문적',\n  '고객지원_공감형', '고객지원_감사형', '고객지원_도움형', '고객지원_전문적',\n  '영업_열정적', '영업_컨설팅형', '영업_전문적', '영업_감사형',\n  '기술지원_전문가형', '기술지원_도움형', '기술지원_정보제공형',\n  '마케팅_매력적', '마케팅_전문적',\n  '내부업무_캐주얼', '내부업무_전문적',\n  '일반문의_전문적', '일반문의_도움형'\n];\n\n// 카테고리와 감정에 따른 답장 전략 결정\nlet responseTemplate = '';\nlet tone = '';\nlet responseType = '';\n\n// 템플릿 매핑 로직 (한글 값 기반)\nif (analysisData.카테고리 === '고객지원') {\n  if (analysisData.감정 === '부정적') {\n    responseTemplate = 'complaint_response';\n    tone = '공감형';\n    responseType = 'apology_and_solution';\n  } else if (analysisData.감정 === '긍정적') {\n    responseTemplate = 'positive_support_response';\n    tone = '감사형';\n    responseType = 'acknowledgment';\n  } else {\n    responseTemplate = 'support_response';\n    tone = '도움형';\n    responseType = 'assistance';\n  }\n} else if (analysisData.카테고리 === '영업') {\n  if (analysisData.감정 === '긍정적') {\n    responseTemplate = 'sales_follow_up';\n    tone = '열정적';\n    responseType = 'engagement';\n  } else {\n    responseTemplate = 'sales_nurture';\n    tone = '컨설팅형';\n    responseType = 'education';\n  }\n} else if (analysisData.카테고리 === '기술지원') {\n  responseTemplate = 'technical_response';\n  tone = '전문가형';\n  responseType = 'solution_focused';\n} else if (analysisData.카테고리 === '보안') {\n  responseTemplate = 'security_response';\n  tone = '정보제공형';\n  responseType = 'guidance';\n} else if (analysisData.카테고리 === '마케팅') {\n  responseTemplate = 'marketing_response';\n  tone = '매력적';\n  responseType = 'promotional';\n} else if (analysisData.카테고리 === '내부업무') {\n  responseTemplate = 'internal_response';\n  tone = '캐주얼';\n  responseType = 'collaborative';\n} else {\n  responseTemplate = 'general_response';\n  tone = '전문적';\n  responseType = 'standard';\n}\n\n// ===== 폴백 로직 추가 =====\n\n// 1단계: 톤이 사용 가능한 목록에 있는지 확인\nif (!availableTones.includes(tone)) {\n  console.log(`사용 불가능한 톤: ${tone}, 기본 톤으로 변경`);\n  tone = defaultToneByCategory[analysisData.카테고리] || '전문적';\n}\n\n// 2단계: 카테고리 + 톤 조합이 실제로 존재하는지 확인\nconst combinationKey = `${analysisData.카테고리}_${tone}`;\nif (!existingCombinations.includes(combinationKey)) {\n  console.log(`존재하지 않는 조합: ${combinationKey}`);\n  \n  // 해당 카테고리의 기본 톤으로 변경\n  const fallbackTone = defaultToneByCategory[analysisData.카테고리];\n  const fallbackCombination = `${analysisData.카테고리}_${fallbackTone}`;\n  \n  if (existingCombinations.includes(fallbackCombination)) {\n    tone = fallbackTone;\n    console.log(`카테고리 기본 톤으로 변경: ${fallbackCombination}`);\n  } else {\n    // 그래도 없으면 완전 기본값 사용\n    tone = '전문적';\n    console.log(`완전 기본 톤으로 변경: 전문적`);\n  }\n}\n\n// 3단계: 카테고리 자체가 지원되지 않는 경우 처리\nconst supportedCategories = ['보안', '고객지원', '영업', '기술지원', '마케팅', '내부업무', '일반문의'];\nif (!supportedCategories.includes(analysisData.카테고리)) {\n  console.log(`지원되지 않는 카테고리: ${analysisData.카테고리}, 일반문의로 변경`);\n  // 카테고리를 일반문의로 변경하고 톤도 맞춤\n  analysisData.카테고리 = '일반문의';\n  tone = '전문적';\n}\n\n// template_id 생성 (카테고리_톤_kr 형식)\nconst templateId = `${analysisData.카테고리}_${tone}_kr`;\n\n// 최종 확인 로그\nconsole.log(`최종 템플릿 조합: ${analysisData.카테고리}_${tone}`);\nconsole.log(`생성된 template_id: ${templateId}`);\n\n// 긴급도에 따른 우선순위 매핑\nlet priorityLevel = '';\nlet responseDeadline = '';\n\nswitch (analysisData.긴급도) {\n  case '높음':\n    priorityLevel = '긴급';\n    responseDeadline = '4시간 이내';\n    break;\n  case '보통':\n    priorityLevel = '높음';\n    responseDeadline = '24시간 이내';\n    break;\n  case '낮음':\n    priorityLevel = '보통';\n    responseDeadline = '3일 이내';\n    break;\n  default:\n    priorityLevel = '보통';\n    responseDeadline = '3일 이내';\n}\n\n// 위험도에 따른 추가 처리 방침\nlet securityAction = 'none';\nlet escalationRequired = false;\n\nif (analysisData.위험도 === '높음') {\n  securityAction = 'immediate_review';\n  escalationRequired = true;\n} else if (analysisData.위험도 === '보통' && analysisData.카테고리 === '보안') {\n  securityAction = 'security_check';\n  escalationRequired = false;\n}\n\n// 자동 응답 여부 결정\nlet autoResponseEligible = false;\nif (analysisData.카테고리 === '마케팅' || \n    (analysisData.카테고리 === '일반문의' && analysisData.감정 === '중립적') ||\n    (analysisData.카테고리 === '보안' && !analysisData.답장필요)) {\n  autoResponseEligible = true;\n}\n\n// 담당자 및 부서 할당\nlet assignedDepartment = '';\nlet assignedTeam = '';\nlet estimatedResponseTime = '';\n\nswitch (analysisData.카테고리) {\n  case '고객지원':\n    assignedDepartment = '고객성공팀';\n    assignedTeam = 'support_team';\n    estimatedResponseTime = analysisData.긴급도 === '높음' ? '2시간' : '24시간';\n    break;\n  case '영업':\n    assignedDepartment = '영업팀';\n    assignedTeam = 'sales_team';\n    estimatedResponseTime = analysisData.긴급도 === '높음' ? '4시간' : '48시간';\n    break;\n  case '기술지원':\n    assignedDepartment = '개발팀';\n    assignedTeam = 'tech_team';\n    estimatedResponseTime = analysisData.긴급도 === '높음' ? '6시간' : '72시간';\n    break;\n  case '보안':\n    assignedDepartment = '보안팀';\n    assignedTeam = 'security_team';\n    estimatedResponseTime = '1시간';\n    break;\n  case '마케팅':\n    assignedDepartment = '마케팅팀';\n    assignedTeam = 'marketing_team';\n    estimatedResponseTime = '일주일';\n    break;\n  case '내부업무':\n    assignedDepartment = '내부운영팀';\n    assignedTeam = 'internal_team';\n    estimatedResponseTime = '48시간';\n    break;\n  default:\n    assignedDepartment = '일반지원팀';\n    assignedTeam = 'general_support';\n    estimatedResponseTime = '24시간';\n}\n\n// 통합된 전략 데이터 반환\nreturn {\n  // === 이메일 원본 정보 (정제된 데이터) ===\n  email: {\n    messageId: emailData.messageId,\n    threadId: emailData.threadId,\n    subject: emailData.subject,\n    subjectClean: emailData.subjectClean,\n    senderEmail: emailData.senderEmail,\n    senderName: emailData.senderName,\n    senderDomain: emailData.senderDomain,\n    recipientEmail: emailData.recipientEmail,\n    content: emailData.content,\n    contentSummary: emailData.contentSummary,\n    date: emailData.date,\n    dateISO: emailData.dateISO,\n    urls: emailData.urls,\n    keywords: emailData.keywords,\n    emailType: emailData.emailType,\n    hasLinks: emailData.hasLinks\n  },\n  \n  // === AI 분석 결과 (한글 필드명) ===\n  analysis: {\n    의도: analysisData.의도,\n    긴급도: analysisData.긴급도,\n    감정: analysisData.감정,\n    카테고리: analysisData.카테고리, // 폴백 로직에서 수정될 수 있음\n    우선순위: analysisData.우선순위,\n    키워드: analysisData.키워드,\n    답장필요: analysisData.답장필요,\n    조치사항: analysisData.조치사항,\n    요약: analysisData.요약,\n    위험도: analysisData.위험도\n  },\n  \n  // === 답장 전략 ===\n  strategy: {\n    template: responseTemplate,\n    tone: tone, // 폴백 로직에서 보정된 톤\n    templateId: templateId, // Airtable 검색용 template_id\n    responseType: responseType,\n    priority: priorityLevel,\n    deadline: responseDeadline,\n    shouldRespond: analysisData.답장필요,\n    autoResponseEligible: autoResponseEligible,\n    securityAction: securityAction,\n    escalationRequired: escalationRequired,\n    estimatedResponseTime: estimatedResponseTime\n  },\n  \n  // === 라우팅 정보 ===\n  routing: {\n    department: assignedDepartment,\n    team: assignedTeam,\n    urgencyLevel: analysisData.긴급도,\n    assignee: assignedTeam,\n    workflowPath: analysisData.답장필요 ? 'response_required' : 'notification_only',\n    nextAction: escalationRequired ? 'escalate' : 'normal_processing'\n  },\n  \n  // === 메타데이터 ===\n  metadata: {\n    processedAt: new Date().toISOString(),\n    workflowVersion: '1.0',\n    confidence: analysisData.우선순위 === '긴급' ? 'high' : 'medium',\n    source: 'email_automation_system',\n    needsHumanReview: escalationRequired || analysisData.위험도 === '높음',\n    fallbackApplied: tone !== responseTemplate ? true : false, // 폴백 적용 여부\n    finalCombination: `${analysisData.카테고리}_${tone}`, // 최종 사용된 조합\n    templateId: templateId // 생성된 template_id\n  }\n};"
+      },
+      "id": "a97cf96f-e98a-4657-9335-92452beceea9",
+      "name": "Merge & Strategy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        -80
+      ],
+      "notesInFlow": true,
+      "notes": "🟡 4강: 데이터 통합 & 전략 결정\n출력:\n- email{} (원본 정보)\n- analysis{} (AI 분석)\n- strategy{} (답장 전략)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "11111111-1111-1111-1111-111111111111",
+              "leftValue": "={{ $json.strategy.shouldRespond }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2ab0f475-5f7a-4059-9124-05e0b0563fdd",
+      "name": "Check Reply Needed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appKMtup6arBHs53y",
+          "mode": "list",
+          "cachedResultName": "이메일 자동 답장",
+          "cachedResultUrl": "https://airtable.com/appKMtup6arBHs53y"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblXDvZyuyMPNPvGK",
+          "mode": "list",
+          "cachedResultName": "이메일_템플릿",
+          "cachedResultUrl": "https://airtable.com/appKMtup6arBHs53y/tblXDvZyuyMPNPvGK"
+        },
+        "filterByFormula": "={{ `template_id = '${$json.strategy.templateId}'` }}",
+        "options": {}
+      },
+      "id": "389945a8-3f4e-44e9-91df-12802196427e",
+      "name": "Get Template from Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        -180
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "HdXEjLwjcS4kqWIB",
+          "name": "Airtable Personal Access Token account 3"
+        }
+      },
+      "notes": "🟢 Airtable에서 템플릿 가져오기\n입력: category, tone\n출력: template_body\n\n\n```\n너는 다양한 이메일 답장 상황에 맞는 템플릿을 작성하는 템플릿 마스터야.\n\n아래에 주어진 카테고리 + 톤 조합 리스트에 대해, 각 조합별로 이메일 답장 템플릿을 생성하고 **Airtable 표에 붙여넣을 수 있는 형식**으로 출력해줘.\n\n---\n\n📌 출력 형식:\n\n각 행은 템플릿 하나를 의미하고, 열은 탭(tab, `\\t`)으로 구분한다.  \n아래 순서로 열을 구성한다:\n\n```\ntemplate_id\t이름\t카테고리\t톤\t템플릿\t설명\t언어\n```\n\n예:\n```\n보안_정보제공형_kr\t보안 알림 응답 (정보제공형)\t보안\t정보제공형\t안녕하세요.\\n보안 알림을 확인해드렸습니다. 귀하의 계정에 보안 관련 변동 사항이 감지되었습니다.\\n계정 보안을 위해 즉시 확인 부탁드립니다.\\n감사합니다.\\n보안팀 드림.\t보안 정보제공형 응답\t한국어\n```\n\n---\n\n📌 템플릿 작성 기준:\n\n- 줄바꿈은 `\\n`으로 표현\n- 전체 텍스트는 존댓말 스타일\n- 템플릿 길이는 3~6줄\n- 문맥은 이메일 답장 형식\n- '템플릿' 열은 이메일 본문 그대로 작성 (예: 인사말 → 상황 설명 → 마무리 인사)\n- 브랜드나 특정 서비스명은 포함하지 않음\n\n---\n\n📌 요청할 조합 리스트:\n\n- 카테고리: 보안\n- 톤: 정보제공형, 공감형, 열정적, 전문가형, 캐주얼 \n\n이 5가지 조합에 대해 각 행을 생성해서 표로 보여줘.\n\n**반드시 탭(\\t)으로 구분된 표 형식만 출력**하고, JSON이나 설명은 포함하지 마.\n```\n"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "= 이메일 답장 작성 요청 ==\n\n다음 정보를 바탕으로 개인화된 답장을 작성해주세요.\n\n────────────────────────────────────────\n**== 원본 이메일 정보 ==**\n- 발신자: {{ $('Check Reply Needed').item.json.email.senderName }} ({{ $('Check Reply Needed').item.json.email.senderEmail }})\n- 수신자: {{ $('Check Reply Needed').item.json.email.recipientEmail }}\n- 제목: {{ $('Check Reply Needed').item.json.email.subject }}\n- 정제된 제목: {{ $('Check Reply Needed').item.json.email.subjectClean }}\n- 날짜: {{ $('Check Reply Needed').item.json.email.date }}\n- 이메일 유형: {{ $('Check Reply Needed').item.json.email.emailType }}\n\n**== 원본 이메일 내용 ==**\n{{ $('Check Reply Needed').item.json.email.content }}\n\n**== 이메일 요약 ==**\n{{ $('Check Reply Needed').item.json.email.contentSummary }}\n\n**== 포함된 URL ==**\n{{ $('Check Reply Needed').item.json.email.urls }}\n\n────────────────────────────────────────\n**== AI 분석 결과 ==**\n- 의도: {{ $('Check Reply Needed').item.json.analysis.의도 }}\n- 감정: {{ $('Check Reply Needed').item.json.analysis.감정 }}\n- 카테고리: {{ $('Check Reply Needed').item.json.analysis.카테고리 }}\n- 긴급도: {{ $('Check Reply Needed').item.json.analysis.긴급도 }}\n- 우선순위: {{ $('Check Reply Needed').item.json.analysis.우선순위 }}\n- 위험도: {{ $('Check Reply Needed').item.json.analysis.위험도 }}\n- 요약: {{ $('Check Reply Needed').item.json.analysis.요약 }}\n- 필요 조치사항: {{ $('Check Reply Needed').item.json.analysis.조치사항 }}\n- 키워드: {{ $('Check Reply Needed').item.json.analysis.키워드 }}\n\n────────────────────────────────────────\n**== 사용할 템플릿 ==**\n{{ $json['템플릿'] }}\n\n────────────────────────────────────────\n**== 답장 전략 정보 ==**\n- 응답 톤: {{ $('Check Reply Needed').item.json.strategy.tone }}\n- 응답 유형: {{ $('Check Reply Needed').item.json.strategy.responseType }}\n- 우선순위: {{ $('Check Reply Needed').item.json.strategy.priority }}\n- 예상 응답 시간: {{ $('Check Reply Needed').item.json.strategy.estimatedResponseTime }}\n- 담당 부서: {{ $('Check Reply Needed').item.json.routing.department }}\n\n================================================================\n**== 작성 가이드라인 ==**\n\n1. **제목(Subject)**  \n   - 원본 제목 앞에 “Re: ” 추가 후 필요 시 명확·구체화  \n   - 예) “Re: 보안 알림” → “Re: 보안 알림 – 계정 액세스 확인 완료”\n\n2. **인사말**  \n   - 발신자명을 사용하여 정중히 시작 (예: “안녕하세요, [발신자명]님.”)\n\n3. **본문 작성 원칙**  \n   - 위 “사용할 템플릿”을 **뼈대**로 삼고, 원본 메일 핵심·AI 조치사항·카테고리 특성을 반영해 상황 맞춤 수정  \n   - 톤({{ $('Check Reply Needed').item.json.strategy.tone }})을 일관 유지\n\n4. **구체적 내용 포함**  \n   - 원본 이메일에서 언급된 제품·서비스·문제·날짜·URL 등을 명확히 언급\n\n5. **조치사항 및 다음 단계**  \n   - AI 조치사항을 **실행 가능** 단계로 제시  \n   - 긴급도({{ $('Check Reply Needed').item.json.analysis.긴급도 }})에 맞춰 응답 기한 안내\n\n6. **마무리**  \n   - 추가 문의·후속 지원 안내 + 정중한 인사  \n   - 서명에 담당 부서명({{ $('Check Reply Needed').item.json.routing.department }}) 포함\n\n────────────────────────────────────────\n**카테고리별 특화 요소(필요 시 포함)**  \n- **보안**: 보안 조치 중요성 강조, 단계별 안내  \n- **고객지원**: 사과·해결 의지, 만족 보장  \n- **영업**: 비즈니스 가치·다음 단계 제안  \n- **기술지원**: 단계별 기술 해결, 정확성  \n- **마케팅**: 혜택 강조, 행동 유도  \n- **내부업무**: 협업·효율 강조  \n- **일반문의**: 명확 정보 제공, 추가 도움 제안\n\n**감정 상태별 대응**  \n- 긍정적 → 감사·관계 강화  \n- 중립적 → 사실 위주·전문성  \n- 부정적 → 공감·사과·해결책 우선\n\n**긴급도별 대응**  \n- 높음 → 즉시 조치·빠른 해결 약속  \n- 보통 → 체계적 접근·처리 시간 안내  \n- 낮음 → 충분한 정보 제공·여유 있는 대응\n\n================================================================\n**== 출력 형식 ==**\nSubject: [답장 제목]\n[답장 본문 – 줄바꿈 유지]\n[서명]\n\n================================================================\n**== 최종 체크리스트 (작성 완료 전 스스로 확인)**  \n1. 템플릿 핵심 메시지·톤이 유지되었는가?  \n2. 원본 이메일의 구체 내용에 정확히 응답했는가?  \n3. AI 분석 조치사항·긴급도가 반영되었는가?  \n4. 한국 비즈니스 문화에 맞는 정중한 언어를 사용했는가?  \n5. 다음 단계·후속 조치가 명확히 안내되었는가?  \n\n**중요:** 이는 단순 템플릿 복붙이 아닌, *이 특정 이메일*을 위한 1:1 맞춤형 답변이어야 합니다. 모든 정보를 종합해 자연스럽고 전문적인 답장을 작성하세요.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 전문적인 이메일 답장 작성 AI 비서입니다. 제공된 템플릿을 기반으로 개인화되고 상황에 맞는 답장을 작성하는 것이 목표입니다. \n\n다음 원칙을 준수하세요:\n1. 제공된 템플릿의 톤과 구조를 유지하되, 받은 이메일의 구체적 내용에 맞춰 개인화하세요\n2. 발신자의 이름을 적절히 사용하여 개인적인 느낌을 주세요\n3. 원본 이메일의 핵심 포인트에 대해 구체적으로 응답하세요\n4. 전문적이고 정중한 톤을 유지하세요\n5. 필요한 경우 후속 조치나 연락처 정보를 포함하세요\n6. 답장은 간결하되 필요한 정보는 모두 포함하세요\n7. 한국의 비즈니스 문화에 맞는 정중하고 예의 바른 언어를 사용하세요\n8. 템플릿의 핵심 메시지는 유지하면서도 자연스럽고 개인화된 답장을 작성하세요\n"
+        }
+      },
+      "id": "cbc9c979-fa4d-4f3d-8a47-122820f8d223",
+      "name": "AI Reply Writer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        2160,
+        -180
+      ],
+      "notesInFlow": true,
+      "notes": "🔴 AI 답장 작성\n입력:\n- 원본 이메일 정보\n- 분석 결과\n- 템플릿\n- 톤 가이드\n출력: 완성된 답장"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "c21d109b-89aa-41ed-b636-aaa4dc5fbdba",
+      "name": "OpenAI Chat Model 2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        20
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "i2ko7n62147IgBPO",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.body }}",
+        "options": {}
+      },
+      "id": "29d7f7f5-3648-482f-9b0a-cd5c25a3dcee",
+      "name": "Create Gmail Draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2480,
+        -180
+      ],
+      "notesInFlow": true,
+      "webhookId": "f85e7035-1dbe-45a7-bff6-52d0983e9d48",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FpAOSM1d6pRwc8pe",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "🟢 Gmail 초안 생성\n같은 스레드에 답장"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "22222222-2222-2222-2222-222222222222",
+              "leftValue": "={{ $('Merge & Strategy').item.json.strategy.priority }}",
+              "rightValue": "높음",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "c26376ca-f0b5-48d2-8377-434cc81feebc",
+              "leftValue": "={{ $('Merge & Strategy').item.json.strategy.priority }}",
+              "rightValue": "긴급",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "b92c9534-6a06-48fe-8d7f-050041fc91fd",
+      "name": "Check Urgency",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "id": "5c68a130-5bc0-4b77-aa4c-d2e304656652",
+      "name": "Mark as Read",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4140,
+        40
+      ],
+      "notesInFlow": true,
+      "webhookId": "3b833772-73a6-400d-b92e-cd18782753ce",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FpAOSM1d6pRwc8pe",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "🟢 처리 완료 표시"
+    },
+    {
+      "parameters": {
+        "content": "## 🎯 AI Agent 구성 설명\n\n**1. AI Email Analyzer**\n- Chat Model: OpenAI GPT-4 (온도 0.3)\n- Output Parser: JSON 구조화 파서\n- 명확한 프롬프트로 7개 필드 생성\n\n**2. AI Reply Writer**\n- Chat Model: OpenAI GPT-4 (온도 0.7)\n- 이전 노드들의 데이터 참조\n- 톤별 가이드라인 제공",
+        "height": 280,
+        "width": 320,
+        "color": 3
+      },
+      "id": "da38a3c2-eff7-4b3b-8e83-a37deb87e66c",
+      "name": "Sticky Note - AI Config",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📊 Airtable 테이블 구조\n\n**1. 이메일_로그**\n- 처리일시, 메시지ID, 발신자\n- 의도, 긴급도, 감정, 카테고리\n- 처리상태, 사용템플릿\n\n**2. 이메일_템플릿**\n- category, tone\n- template_body, variables\n\n**3. 고객_정보**\n- 이메일, 이름, 회사\n- 이전문의내역",
+        "height": 340,
+        "width": 350,
+        "color": 5
+      },
+      "id": "a4bb4045-f32b-4073-bd46-e36739343406",
+      "name": "Sticky Note - Airtable",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3400,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🔄 전체 워크플로우 흐름\n\n1. Gmail Trigger → 새 메일 감지 (id만)\n2. Get Email Details → 전체 데이터 가져오기\n3. Parse Email Data → 구조화된 데이터로 변환\n4. AI Email Analyzer → 7개 필드 분석\n5. Merge & Strategy → 데이터 통합 & 전략\n6. 분기 처리:\n   - 답장 필요 → Template → AI Reply\n   - 긴급 → Slack 알림\n   - 부정적 → 관리자 승인\n7. Airtable 로그 → 모든 내역 저장\n8. Mark as Read → 처리 완료\n\n",
+        "height": 340,
+        "width": 450,
+        "color": 7
+      },
+      "id": "8e3c1b47-0dcd-4fb5-be47-886641ca1a8e",
+      "name": "Sticky Note - Flow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        540,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        420,
+        -80
+      ],
+      "id": "7eec2b28-b666-49af-8434-dae1d482a698",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FpAOSM1d6pRwc8pe",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"subject\": {\n      \"type\": \"string\"\n    },\n    \"body\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\"subject\", \"body\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2340,
+        20
+      ],
+      "id": "e6fab67b-1fb8-453e-84a6-bb1e26d4b9f9",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C092VKCHTL5",
+          "mode": "list",
+          "cachedResultName": "이메일-자동화"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        3100,
+        -180
+      ],
+      "id": "d94fda2a-91a5-455b-86c3-fac5b73b0208",
+      "name": "Slack",
+      "webhookId": "24589370-28fb-4f4d-bb13-33ff64d02a59",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "sm4OLhx5v8NKi3qD",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=== 새 답장 초안 Slack 알림 생성 ==\n\n[이메일 요약]\n• 제목: {{ $('Merge & Strategy').item.json.email.subjectClean }}\n• 발신자: {{ $('Merge & Strategy').item.json.email.senderName }} ({{ $('Merge & Strategy').item.json.email.senderEmail }})\n• 카테고리: {{ $('Merge & Strategy').item.json.analysis.카테고리 }}\n• 우선순위: {{ $('Merge & Strategy').item.json.strategy.priority }}\n• 예상 응답 기한: {{ $('Merge & Strategy').item.json.strategy.estimatedResponseTime }}\n• AI 요약: {{ $('Merge & Strategy').item.json.analysis.요약 }}\n\n[답장 초안 미리보기]\n{{ $('AI Reply Writer').item.json.output.body }}\n\n[초안 Gmail 링크]\nhttps://mail.google.com/mail/u/0/#inbox?compose={{ $('Create Gmail Draft').item.json.message.id }}\n\n위 정보를 활용해 팀 채널(이메일-자동화)에 공유할 Slack 메시지를 작성하세요.\n",
+        "options": {
+          "systemMessage": "당신은 기업 내부용 Slack 알림 전문 AI 비서입니다.\n다음 규칙을 반드시 지켜 한국어 Slack 메시지를 작성하십시오.\n\n1) 출력은 순수 텍스트. 굵게(**)·기울임(*)·코드블록(```) 등 마크다운은 사용 금지.\n2) 최대 8줄. 각 줄은 \\n 로, 필요하면 구분용 빈 줄은 \\n\\n 로 삽입해 깔끔한 레이아웃을 유지합니다.\n3) 첫 줄: :email: 이모지 + 핵심 요약 한 문장.\n4) 이어지는 블록 순서\n   a) 요약(한 줄)  \n   b) 메타데이터(카테고리·우선순위·예상 응답 기한)  \n   c) Gmail 초안 링크  \n   d) 행동 지시\n5) 작성 톤은 ‘{{ $('Merge & Strategy').item.json.strategy.tone }}’ 값을 그대로 따릅니다.\n6) 링크·ID 값은 그대로 삽입하며, JSON·주석·마크다운 표 등은 포함하지 않습니다.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        -180
+      ],
+      "id": "bf04bbdf-4b3d-4afe-befd-13e87bcb739c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2680,
+        40
+      ],
+      "id": "915fdcd5-dc2f-46d3-b471-99e8c97c2f5c",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "i2ko7n62147IgBPO",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "== 긴급 이메일 Slack 알림 작성 ==\n\n[이메일 메타데이터]\n• 발신자: {{ $('Merge & Strategy').item.json.email.senderName }} ({{ $('Merge & Strategy').item.json.email.senderEmail }})\n• 제목: {{ $('Merge & Strategy').item.json.email.subject }}\n• 카테고리: {{ $('Merge & Strategy').item.json.analysis.카테고리 }}\n• 긴급도: {{ $('Merge & Strategy').item.json.analysis.긴급도 }}\n• 위험도: {{ $('Merge & Strategy').item.json.analysis.위험도 }}\n• AI 요약: {{ $('Merge & Strategy').item.json.analysis.요약 }}\n• Gmail 링크: https://mail.google.com/mail/u/0/#inbox/{{ $('Merge & Strategy').item.json.email.messageId }}\n\n위 정보를 활용해 즉각 대응이 필요한 Slack 경보 메시지를 작성하세요.\n",
+        "options": {
+          "systemMessage": "당신은 긴급 이메일 알림 전용 Slack 봇입니다.\n다음 지침을 엄격히 지키십시오.\n\n1) 출력은 순수 텍스트. 마크다운 금지.\n2) 첫 줄: 🚨 이모지 + 제목·발신자·카테고리·긴급도 요약.\n3) 둘째 줄: @here 멘션과 즉시 대응 지시.\n4) 필요 시 시각적 경각심을 위해 🔥 이모지를 추가하세요.\n5) 최대 5줄. 의미 단락 사이에는 \\n\\n 로 빈 줄을 넣어 가독성을 높일 수 있습니다.\n6) JSON·주석·표 등 추가 요소는 포함하지 않습니다.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        200
+      ],
+      "id": "7c1c879c-7dc6-4e70-8c4b-1367a226724e",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        420
+      ],
+      "id": "193b4cd0-03a0-4010-ae3a-e9d9c78fdc9a",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "i2ko7n62147IgBPO",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appqH342szMpU65kM",
+          "mode": "list",
+          "cachedResultName": "이메일 자동화 로그",
+          "cachedResultUrl": "https://airtable.com/appqH342szMpU65kM"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl3zNduozSiZGKrJ",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appqH342szMpU65kM/tbl3zNduozSiZGKrJ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "이메일 제목": "={{ $('Merge & Strategy').item.json.email.subjectClean }}",
+            "이메일 주소": "={{ $('Merge & Strategy').item.json.email.senderEmail }}",
+            "이메일 내용 요약": "={{ $('Merge & Strategy').item.json.email.contentSummary }}",
+            "요약": "={{ $('Merge & Strategy').item.json.analysis[\"요약\"] }}",
+            "답장필요": "={{ $('Merge & Strategy').item.json.analysis[\"답장필요\"] }}",
+            "의도": "={{ $('Merge & Strategy').item.json.analysis[\"의도\"] }}",
+            "긴급도": "={{ $('Merge & Strategy').item.json.analysis[\"긴급도\"] }}",
+            "감정": "={{ $('Merge & Strategy').item.json.analysis[\"감정\"] }}",
+            "우선순위": "={{ $('Merge & Strategy').item.json.analysis[\"우선순위\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "이메일 제목",
+              "displayName": "이메일 제목",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "이메일 주소",
+              "displayName": "이메일 주소",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "이메일 내용 요약",
+              "displayName": "이메일 내용 요약",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "요약",
+              "displayName": "요약",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "우선순위",
+              "displayName": "우선순위",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "답장필요",
+              "displayName": "답장필요",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "의도",
+              "displayName": "의도",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "긴급도",
+              "displayName": "긴급도",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "감정",
+              "displayName": "감정",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "23bb3085-e8ec-40c5-b4a1-f1d55b13f4a4",
+      "name": "Log to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        3860,
+        40
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "HdXEjLwjcS4kqWIB",
+          "name": "Airtable Personal Access Token account 3"
+        }
+      },
+      "notes": "🟢 Airtable 로그 저장\n모든 처리 내역 기록"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C092VKCHTL5",
+          "mode": "list",
+          "cachedResultName": "이메일-자동화"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2360,
+        200
+      ],
+      "id": "8ef70117-ec6f-4ea8-a197-5f96a817bd54",
+      "name": "Slack1",
+      "webhookId": "f971cf24-ed77-4fbe-8355-60bbb897efef",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "sm4OLhx5v8NKi3qD",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "ok",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3560,
+        40
+      ],
+      "id": "0335f769-960c-4dbf-90e6-c29e020ac03b",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Email Details": {
+      "main": [
+        [
+          {
+            "node": "Parse Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Email Data": {
+      "main": [
+        [
+          {
+            "node": "AI Email Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Email Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Merge & Strategy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Email Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Email Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge & Strategy": {
+      "main": [
+        [
+          {
+            "node": "Check Reply Needed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Urgency",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Reply Needed": {
+      "main": [
+        [
+          {
+            "node": "Get Template from Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get Template from Airtable": {
+      "main": [
+        [
+          {
+            "node": "AI Reply Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Reply Writer": {
+      "main": [
+        [
+          {
+            "node": "Create Gmail Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Reply Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Gmail Draft": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Urgency": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Email Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Reply Writer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Slack1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Airtable": {
+      "main": [
+        [
+          {
+            "node": "Mark as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Log to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a5b5ec70-2a1c-4947-8768-ce6f592af6db",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6584c3ee4a1bba8a530380aa4465cf16feecea86d0c373cc0dd44d8c1497f81e"
+  },
+  "id": "R0JRWz9LLj9jvO9A",
+  "tags": [
+    {
+      "createdAt": "2025-06-16T02:46:07.116Z",
+      "updatedAt": "2025-06-16T02:46:07.116Z",
+      "id": "5MkdT85YN1GVRZnz",
+      "name": "이메일자동화"
+    },
+    {
+      "createdAt": "2025-06-16T02:46:07.164Z",
+      "updatedAt": "2025-06-16T02:46:07.164Z",
+      "id": "Icz1SXfm7tZ6OtAj",
+      "name": "AI에이전트"
+    },
+    {
+      "createdAt": "2025-06-16T02:46:07.142Z",
+      "updatedAt": "2025-06-16T02:46:07.142Z",
+      "id": "RbFpnQ9gtWCpLyIv",
+      "name": "Airtable"
+    },
+    {
+      "createdAt": "2025-06-16T02:46:07.189Z",
+      "updatedAt": "2025-06-16T02:46:07.189Z",
+      "id": "RcelhEOyFgvq1dFZ",
+      "name": "Gmail연동"
+    }
+  ]
+}

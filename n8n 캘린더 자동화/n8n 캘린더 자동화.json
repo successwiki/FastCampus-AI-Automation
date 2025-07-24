@@ -1,0 +1,1165 @@
+{
+  "name": "캘린더 자동화",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        360,
+        220
+      ],
+      "id": "e53dba58-c9a4-4d8d-af70-da5aea953076",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1860,
+        -40
+      ],
+      "id": "51183b93-c7a4-4f97-a00d-95ff0435f9f9",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=발신자이름: {{ $json[\"데이터\"][\"발신자이름\"] }}\n발신이메일: {{ $json[\"데이터\"][\"발신이메일\"] }}\n이메일제목: {{ $json[\"데이터\"][\"정제제목\"] }}\n본문: {{ $json[\"데이터\"][\"본문\"] }}\nISO있음여부: {{ $json[\"데이터\"][\"ISO있음\"] }}\nISO날짜:{{ $json[\"데이터\"][\"ISO정보\"][\"날짜\"] }}\nISO시작시간:{{ $json[\"데이터\"][\"ISO정보\"][\"시작시간\"] }}\nISO종료시간:{{ $json[\"데이터\"][\"ISO정보\"][\"종료시간\"] }}\nISO참석자:{{ $json[\"데이터\"][\"ISO정보\"][\"참석자\"] }}\n\n오늘: {{ $now }} ",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# SYSTEM PROMPT – 이메일 ➜ 미팅 정보 추출\n\n## 역할\n당신은 **미팅 인사이트 엔진**입니다.  \n사용자가 전달한 이메일 데이터를 분석해 미팅 관련 정보를 **JSON** 객체로 반환합니다.\n\n---\n\n## 입력(변수)\n발신자이름: {{ $json[\"데이터\"][\"발신자이름\"] }}\n발신이메일: {{ $json[\"데이터\"][\"발신이메일\"] }}\n이메일제목: {{ $json[\"데이터\"][\"정제제목\"] }}\n본문: {{ $json[\"데이터\"][\"본문\"] }}\nISO있음여부: {{ $json[\"데이터\"][\"ISO있음\"] }}\nISO날짜: {{ $json[\"데이터\"][\"ISO정보\"][\"날짜\"] }}\nISO시작시간: {{ $json[\"데이터\"][\"ISO정보\"][\"시작시간\"] }}\nISO종료시간: {{ $json[\"데이터\"][\"ISO정보\"][\"종료시간\"] }}\nISO참석자: {{ $json[\"데이터\"][\"ISO정보\"][\"참석자\"] }}\n\n\n---\n\n## 처리 규칙\n1. **일정 후보 결정**  \n   - `ISO있음여부 = true` & ISO날짜 존재 → ISO 정보를 1순위로 사용  \n   - ISO 정보가 없거나 불완전하면 이메일 **제목·본문**에서 날짜·시간·참석자를 파싱해 보완\n2. **시간 누락 시 기본값**  \n   - 시간(시작·종료)이 **모두 누락** →  \n     - `미팅시간.시작` → `\"<미팅날짜> 00:00:00\"`  \n     - `미팅시간.종료` → `\"<미팅날짜> 23:59:59\"`  \n   - 시작만 있고 종료가 없으면 종료를 시작 시간보다 +1시간으로 채움\n3. **시간명시 여부 판단**  \n   - ISO시간이 존재하거나 본문·제목에서 시간 표현(“15:00”, “3 PM” 등)을 찾으면 `시간명시됨 = true`  \n   - 그렇지 않으면 `시간명시됨 = false`\n4. **미팅성격 분류**  \n   - 키워드 기반(“demo”, “interview”, “주간 회의”, “kick‑off” …)  \n   - 불명확하면 `\"기타\"`\n5. **JSON 출력** – 아래 스키마를 따르며 **객체만** 출력"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        360,
+        0
+      ],
+      "id": "050adef0-bacb-47ec-b344-703e9dcfba24",
+      "name": "일정 요청 분석"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        0
+      ],
+      "id": "0c2f55a9-1323-419e-b85d-176bcd9c011d",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JsBVW5CsPjKgM1N7",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "id": "ed3ed4d4-4468-4e60-99fd-49aab7904862",
+      "name": "Get Email Details",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -100,
+        0
+      ],
+      "notesInFlow": true,
+      "webhookId": "3a52d4f4-e056-4ab2-b09e-a1afbe48e797",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JsBVW5CsPjKgM1N7",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "/**\n * n8n Function Node\n * Gmail ➜ ICS 일정 정보 추출\n * 전체 결과를 단일 객체(데이터) 안에 래핑\n */\n\n// 1) Gmail 노드 원본\nconst emailData = $input.item.json;\n\n/*─────────────────────────────  2) 유틸  ─────────────────────────────*/\nfunction cleanText(content) {\n  if (!content) return '';\n  return content\n    .replace(/&#x([0-9A-F]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))\n    .replace(/&#([0-9]+);/g,        (_, d) => String.fromCharCode(parseInt(d, 10)))\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&apos;/g, \"'\")\n    .replace(/<[^>]*>/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction parseEmailInfo(obj) {\n  if (!obj?.value?.[0]) return { email: '', name: '', domain: '' };\n  const { address: email = '', name = '' } = obj.value[0];\n  return { email, name: name || email, domain: email.split('@')[1] || '' };\n}\n\n/*─────────────────────────────  3) ICS 파서  ─────────────────────────────*/\nfunction parseICS(rawIcs) {\n  const lines = rawIcs.split(/\\r?\\n/);\n\n  const res = { date: '', startTime: '', endTime: '', participants: [] };\n  let dtStart = '', dtEnd = '';\n\n  for (const ln of lines) {\n    if (ln.startsWith('DTSTART')) dtStart = ln.split(':')[1].trim();\n    else if (ln.startsWith('DTEND')) dtEnd = ln.split(':')[1].trim();\n    else if (ln.startsWith('ATTENDEE')) {\n      const m = ln.match(/mailto:([^;]+)/i);\n      if (m) res.participants.push(m[1].toLowerCase());\n    }\n  }\n\n  const toLocal = dt => {\n    if (!dt) return { d: '', t: '' };\n    const y = dt.slice(0, 4), m = dt.slice(4, 6), d = dt.slice(6, 8);\n    const h = dt.slice(9, 11), min = dt.slice(11, 13);\n    const local = new Date(Date.parse(`${y}-${m}-${d}T${h}:${min}:00Z`));\n    return {\n      d: `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, '0')}-${String(local.getDate()).padStart(2, '0')}`,\n      t: `${String(local.getHours()).padStart(2, '0')}:${String(local.getMinutes()).padStart(2, '0')}`\n    };\n  };\n\n  if (dtStart) {\n    const { d, t } = toLocal(dtStart);\n    res.date = d; res.startTime = t;\n  }\n  if (dtEnd) res.endTime = toLocal(dtEnd).t;\n\n  res.participants = [...new Set(res.participants)];\n  return res;\n}\n\n/*─────────────────────────────  4) 본문(정제만)  ─────────────────────────────*/\nconst bodyRaw = emailData.text || emailData.textAsHtml || emailData.html || '';\nconst body    = cleanText(bodyRaw);\n\n/*─────────────────────────────  5) ICS 첨부 확인  ─────────────────────────────*/\nlet isoInfo  = { date: '', startTime: '', endTime: '', participants: [] };\nlet isoFound = false;\n\nif (Array.isArray(emailData.attachments)) {\n  const ics = emailData.attachments.find(att =>\n    (att.mimeType && att.mimeType.includes('calendar')) ||\n    (att.fileName && att.fileName.toLowerCase().endsWith('.ics'))\n  );\n  if (ics?.content) {\n    isoInfo = parseICS(Buffer.from(ics.content, 'base64').toString('utf8'));\n    if (isoInfo.date || isoInfo.startTime || isoInfo.endTime || isoInfo.participants.length)\n      isoFound = true;\n  }\n}\n\n/*─────────────────────────────  6) 발신·수신  ─────────────────────────────*/\nconst fromInfo = parseEmailInfo(emailData.from);\nconst toInfo   = parseEmailInfo(emailData.to);\n\n/*─────────────────────────────  7) 단일 래핑 객체 반환  ─────────────────────────────*/\nreturn {\n  \"데이터\": {\n    \"메시지ID\" : emailData.messageId || emailData.id || '',\n    \"스레드ID\" : emailData.threadId  || '',\n\n    \"제목\"     : cleanText(emailData.subject || ''),\n    \"정제제목\" : cleanText(emailData.subject || '').replace(/^(RE:|FW:|Re:|Fwd:|답변:|전달:)\\s*/i, ''),\n\n    \"발신이메일\" : fromInfo.email,\n    \"발신자이름\" : fromInfo.name,\n    \"수신이메일\" : toInfo.email,\n    \"수신자이름\" : toInfo.name,\n\n    \"본문\"     : body,\n    \"본문길이\" : body.length,\n\n    \"ISO있음\"  : isoFound,\n    \"ISO정보\"  : {\n      \"날짜\"     : isoInfo.date,\n      \"시작시간\" : isoInfo.startTime,\n      \"종료시간\" : isoInfo.endTime,\n      \"참석자\"   : isoInfo.participants\n    },\n\n    \"날짜ISO\"  : (() => {\n      try { return new Date(emailData.date).toISOString(); }\n      catch { return new Date().toISOString(); }\n    })(),\n\n    \"처리시각\" : new Date().toISOString()\n  }\n};\n"
+      },
+      "id": "fadbf2a5-f480-40fc-8a7a-9ad72400cd81",
+      "name": "Parse Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "🟡 이메일 데이터 정제\n출력:\n- messageId\n- threadId\n- subject\n- from\n- senderEmail\n- senderName\n- body (디코딩됨)\n- date\n- labels"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"미팅요약\":   { \"type\": \"string\" },\n    \"미팅성격\":   { \"type\": \"string\" },\n    \"미팅날짜\":   { \"type\": \"string\" },\n    \"미팅시간\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"시작\": { \"type\": \"string\" },\n        \"종료\": { \"type\": \"string\" }\n      }\n    },\n    \"시간명시됨\": { \"type\": \"boolean\" },\n    \"참석자\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"추가메모\":  { \"type\": \"string\" }\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        540,
+        220
+      ],
+      "id": "d797b8bb-2b07-48bb-882f-7ac3db2de2d7",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8c4825d2-b0c2-4618-8b7e-34e724f9d6cb",
+              "leftValue": "={{ $json.output[\"시간명시됨\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "dff08dfa-0aad-4426-9ca7-ce5145e05936",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1000,
+        20
+      ],
+      "id": "0b65ecbf-6590-4d63-b87b-df7b26e7e117",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"가용슬롯\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"시작시간\": { \"type\": \"string\" },\n          \"종료시간\": { \"type\": \"string\" }\n        },\n        \"required\": [\"시작시간\", \"종료시간\"]\n      }\n    },\n    \"추천슬롯\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"시작시간\": { \"type\": \"string\" },\n        \"종료시간\": { \"type\": \"string\" }\n      },\n      \"required\": [\"시작시간\", \"종료시간\"]\n    },\n    \"미팅가능여부\":   { \"type\": \"boolean\" },\n    \"미팅날짜\":       { \"type\": \"string\" },\n    \"이메일요약\":     { \"type\": \"string\" },\n    \"참석자\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"당일시작\":       { \"type\": \"string\" },\n    \"당일종료\":       { \"type\": \"string\" },\n    \"슬랙메시지\":     { \"type\": \"string\" }\n  },\n  \"required\": [\n    \"가용슬롯\",\n    \"추천슬롯\",\n    \"미팅가능여부\",\n    \"미팅날짜\",\n    \"이메일요약\",\n    \"참석자\",\n    \"당일시작\",\n    \"당일종료\",\n    \"슬랙메시지\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1240,
+        500
+      ],
+      "id": "d1012d21-7a1b-4409-975d-aecf1ab8b2bc",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"미팅가능여부\": { \"type\": \"boolean\" },\n    \"시작시간\":     { \"type\": \"string\" },\n    \"종료시간\":     { \"type\": \"string\" },\n    \"참석자\":     {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"당일시작\":     { \"type\": \"string\" },\n    \"당일종료\":     { \"type\": \"string\" },\n    \"미팅요약\":     { \"type\": \"string\" },\n    \"슬랙메시지\":   { \"type\": \"string\" }\n  },\n  \"required\": [\n    \"미팅가능여부\",\n    \"시작시간\",\n    \"종료시간\",\n    \"참석자\",\n    \"당일시작\",\n    \"당일종료\",\n    \"미팅요약\",\n    \"슬랙메시지\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        -20
+      ],
+      "id": "b56f4aa4-41dd-444d-aee9-9cc039d0de0d",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d8a4e065-5dd9-43f6-bde9-25803e5ae53d",
+              "leftValue": "={{ $json.output['미팅가능여부'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1340,
+        -260
+      ],
+      "id": "fbc6421a-72ff-4e04-abca-4b89687768cb",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9eb4fafd-3f9c-4f69-bd31-164817b32538",
+              "leftValue": "={{ $json.output['미팅가능여부'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1340,
+        280
+      ],
+      "id": "36989d10-4e30-4480-bf59-5c541d0760fe",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1880,
+        580
+      ],
+      "id": "e4d782fb-72d2-435d-b186-a5bc0026c1d5",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음의 정보를 바탕으로 캘린더에 일정을 추가해주세요.\n\n미팅날짜: {{ $json.output['미팅날짜'] }}\n미팅시작시간: {{ $json.output['추천슬롯']['시작시간'] }}\n미팅종료시간: {{ $json.output['추천슬롯']['종료시간'] }}\n미팅 요약: {{ $json.output['이메일요약'] }}\n참석자: {{ $json.output['참석자'] }}\n\n개인 일정으로 생성해주세요\n일정 제목과 설명을 알아서 만들어주세요\n설명에는 참석자가있을경우 참석자가 누구다라고 명시해주세요\n\n마지막으로 미팅에 대한 상세한 내용을 결과로 주세요\n\n\n\n오늘: {{ $now }} \n\n",
+        "options": {
+          "systemMessage": "=# 개요  \n당신은 캘린더 어시스턴트입니다.  \n지정된 시간에 따라 미팅을 캘린더에 등록하고,  \n등록 성공 여부에 따라 간결하고 명확한 **자연어 메시지**를 출력합니다.\n\n## 사용 도구  \nCreate Event\nDelete Event\nUpdate Event\nGet Events  \n\n## 역할  \n- 미팅 시간(시작·종료)이 이미 정해져 있습니다.  \n- 일정 등록 전, 해당 시간에 충돌이 있는지 Get Events로 확인합니다.  \n- 충돌이 없다면 Create Event로 등록합니다.  \n- 이후, 등록 결과를 자연어 메시지로 출력합니다.  \n\n## 출력 규칙  \n- **등록 성공 시**:  \n  ```\n  ✅ '[미팅요약]' 일정이 YYYY년 M월 D일 HH:MM–HH:MM에 등록되었습니다. 참석자: A, B\n  ```  \n- **등록 실패 시**:  \n  ```\n  ❌ '[미팅요약]' 일정 등록에 실패했습니다. 이미 해당 시간에 다른 일정이 있거나 시간이 유효하지 않습니다.\n  ```  \n- 출력은 반드시 **한 문장**의 자연어 메시지 형식으로만 출력하며, JSON이나 주석은 포함하지 않습니다.\n\n## 최종 안내  \n- 현재 시간: {{ $now }}\n- 시간 포맷은 24시간제 HH:MM 사용  \n- 참석자 배열이 비어 있을 경우 \"참석자 없음\"으로 출력  \n- 출력은 Slack에 바로 전송될 수 있도록 자연스럽고 명확해야 합니다"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        260
+      ],
+      "id": "ab16c714-457c-46a4-99b2-bc3780c1c76f",
+      "name": "일정 등록 (시간 미지정)",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=다음의 정보를 바탕으로 tool 을 이용해서 캘린더에 일정을 추가해주세요.\n\n개인 일정으로 생성해주세요\n일정 제목과 설명을 알아서 만들어주세요\n설명에는 참석자가있을경우 참석자가 누구다라고 명시해주세요\n\n일정을 등록할때는 사용자의 시간대에 맞게 등록해주세요.\n\n마지막으로 미팅에 대한 상세한 내용을 결과로 주세요\n\n미팅 시작시간: {{ $json.output['시작시간'] }}\n미팅 종료시간: {{ $json.output['종료시간'] }}\n미팅 요약: {{ $json.output['미팅요약'] }}\n참석자: {{ $json.output['참석자'] }}\n\n오늘: {{ $now }} ",
+        "options": {
+          "systemMessage": "=# 개요  \n당신은 캘린더 어시스턴트입니다. 사용자의 요청에 따라  \n미팅을 생성하거나, 일정을 조회·수정·삭제하는 작업을 수행합니다.\n\n## 캘린더 관리 도구  \nCreate Event  \nDelete Event  \nUpdate Event  \nGet Events  \n\n## 규칙  \n- 들어온 요청을 곧바로 실행하세요.  \n- 추가적인 확인 질문은 하지 말고, 전달받은 의도에 따라 바로 작업을 수행하세요.\n\n## 최종 안내  \n현재 날짜/시간: {{ $now }}  \n이벤트 시간 길이가 명시되지 않은 경우, 기본적으로 1시간으로 간주합니다."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -280
+      ],
+      "id": "3ea40096-061a-4273-872e-c72f2d839726",
+      "name": "일정 등록 (시간 지정)",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C095ZC6F3QS",
+          "mode": "list",
+          "cachedResultName": "캘린더-자동화"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2540,
+        260
+      ],
+      "id": "0c0c53ee-6d4f-498d-a8e8-ccd7c8259f17",
+      "name": "최종 안내 메시지 전송 2",
+      "webhookId": "124dfef4-3f60-487f-94f5-5686629c78c3",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "La7p0JT9upGF8cgU",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C095ZC6F3QS",
+          "mode": "list",
+          "cachedResultName": "캘린더-자동화"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2540,
+        -300
+      ],
+      "id": "2141c79e-dc51-4903-bcca-300a92f02ffc",
+      "name": "최종 안내 메시지 전송 1",
+      "webhookId": "124dfef4-3f60-487f-94f5-5686629c78c3",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "La7p0JT9upGF8cgU",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C095ZC6F3QS",
+          "mode": "list",
+          "cachedResultName": "캘린더-자동화"
+        },
+        "text": "={{ $json.output['슬랙메세지'] }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1580,
+        -60
+      ],
+      "id": "31e75541-0e81-412c-9665-f5eabfcc9f33",
+      "name": "응답 전송 1",
+      "webhookId": "785e3402-b427-4768-8de1-c2dccfd6501b",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "La7p0JT9upGF8cgU",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C095ZC6F3QS",
+          "mode": "list",
+          "cachedResultName": "캘린더-자동화"
+        },
+        "text": "={{ $json.output['슬랙메세지'] }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1580,
+        420
+      ],
+      "id": "45638f4e-3acd-44fa-805d-654efafc11ff",
+      "name": "응답 전송 2",
+      "webhookId": "785e3402-b427-4768-8de1-c2dccfd6501b",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "La7p0JT9upGF8cgU",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "start": "={{ $('If2').item.json.output['추천슬롯']['시작시간'] }}",
+        "end": "={{ $('If2').item.json.output['추천슬롯']['종료시간'] }}",
+        "additionalFields": {
+          "attendees": [],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1960,
+        740
+      ],
+      "id": "204a429c-8ce3-429b-a82e-10e8e49fd461",
+      "name": "Create Event 2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2120,
+        740
+      ],
+      "id": "33487d47-5e1b-4e03-8bfe-ad2fb401c45c",
+      "name": "Delete Event 2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "updateFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2280,
+        740
+      ],
+      "id": "3c78fd87-cc61-44fa-a65c-6b6e8dd17af1",
+      "name": "Update Event 2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $('If2').item.json.output['당일시작'] }}",
+        "timeMax": "={{ $('If2').item.json.output['당일종료'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2420,
+        740
+      ],
+      "id": "453a4cf5-d9f4-4751-a4e3-91cc23793841",
+      "name": "Get Events 2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.output['미팅시간']['시작'] }}",
+        "timeMax": "={{ $json.output['미팅시간']['종료'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1060,
+        500
+      ],
+      "id": "9ded2705-51b7-4295-96e5-2e78171b1d01",
+      "name": "Get_Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "start": "={{ $json.output['시작시간'] }}",
+        "end": "={{ $json.output['종료시간'] }}",
+        "additionalFields": {
+          "attendees": [],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2020,
+        60
+      ],
+      "id": "1435b827-2b1d-4870-8ab1-49135a005b71",
+      "name": "Create Event 1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "updateFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2340,
+        60
+      ],
+      "id": "f33c2874-8530-43ca-96d1-5b0620d3b705",
+      "name": "Update Event 1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2180,
+        60
+      ],
+      "id": "8c63f2b8-66ec-47d9-a1b6-a6122ec321dc",
+      "name": "Delete Event  1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.output['당일시작'] }}",
+        "timeMax": "={{ $json.output['당일종료'] }}",
+        "options": {
+          "timeZone": {
+            "__rl": true,
+            "value": "America/Toronto",
+            "mode": "list",
+            "cachedResultName": "America/Toronto"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2480,
+        60
+      ],
+      "id": "bd0b000d-4e9c-4281-a5e8-e86754bb6aad",
+      "name": "Get Events 1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=미팅요약:  {{ $json.output['미팅요약'] }}\n미팅성격: {{ $json.output['미팅성격'] }}\n미팅날짜: {{ $json.output['미팅날짜'] }}\n시작시간: {{ $json.output['미팅시간']['시작'] }}\n종료시간: {{ $json.output['미팅시간']['종료'] }}\n참석자: {{ $json.output['참석자'] }}\n\n오늘: {{ $now }} ",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "SYSTEM PROMPT – 가용 슬롯 추천 (시간 미지정 브랜치)\n\n추천 슬롯 로직  \npreferred_time_logic = \"점심시간 이후(13:00 이후) 구간에서 가능한 한 가장 이른 1시간 슬롯\"  \n/* 위 문자열을 바꾸면 추천 기준이 그대로 바뀝니다.  \n   예: \"업무 종료 직전(17:00 이후) 가장 늦은 슬롯\" */\n\n1. 역할  \n입력 JSON 객체는 \"시간명시됨\": false 상태입니다.  \n도구 Get_Events로 해당 날짜(24시간) 이벤트 목록이 주어집니다.  \n09:00–18:00 사이 1시간 단위 가용 슬롯을 계산하고, preferred_time_logic 기준으로  \n추천 슬롯을 고른 뒤 다음 항목을 포함한 JSON 객체 하나를 반환합니다:  \n- 가용슬롯  \n- 추천슬롯  \n- 미팅가능여부  \n- 미팅날짜  \n- 이메일요약  \n- 참석자  \n- 당일시작  \n- 당일종료  \n- 슬랙메시지\n\n2. 입력  \n미팅날짜          : YYYY-MM-DD  \n이메일요약        : (예: \"성공지식백과와 미팅 요청\")  \n참석자            : 이메일 문자열 배열  \nGet_Events 결과   : [ {\"start\":\"HH:MM\",\"end\":\"HH:MM\"}, … ]  // 비어 있으면 종일 비어 있음\n\n3. 처리 절차  \n① 이벤트 차단 구간 계산  \n   – 입력 이벤트의 시작·종료 시간을 사용해 09:00–18:00 구간에서 겹치는 부분 제거  \n② 가용 슬롯 도출  \n   – 남은 구간에서 연속 60분 이상을 아래 구조로 나열  \n     { \"시작시간\": \"2025-07-15 13:00:00\", \"종료시간\": \"2025-07-15 14:00:00\" }  \n③ 추천 슬롯 선택  \n   – preferred_time_logic 자연어를 해석해 우선순위 결정  \n     · 예: \"점심시간 이후\" → 13:00 이후 슬롯 중 가장 이른 시간  \n   – 가용 슬롯이 없으면 추천 슬롯은 시작/종료시간 모두 빈 문자열  \n④ 미팅가능여부 결정  \n   – 가용 슬롯 배열이 하나 이상이면 true, 없으면 false  \n⑤ 당일시작 및 당일종료 계산  \n   – 미팅날짜 기준으로 00:00:00과 23:59:59를 ISO 문자열로 포함  \n⑥ 슬랙메시지 생성  \n   – 미팅가능여부가 true인 경우: 빈 문자열  \n   – 미팅가능여부가 false인 경우:  \n     `\"요청된 미팅 '성공지식백과와 미팅 요청'은 지정된 시간이 없어 자동으로 가용 슬롯을 계산했으나, 2025-07-16에는 가능한 시간이 없어 일정이 등록되지 않았습니다.\"`\n\n4. JSON 출력 스키마 (n8n)  \n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"가용슬롯\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"시작시간\": { \"type\": \"string\" },\n          \"종료시간\": { \"type\": \"string\" }\n        },\n        \"required\": [\"시작시간\", \"종료시간\"]\n      }\n    },\n    \"추천슬롯\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"시작시간\": { \"type\": \"string\" },\n        \"종료시간\": { \"type\": \"string\" }\n      },\n      \"required\": [\"시작시간\", \"종료시간\"]\n    },\n    \"미팅가능여부\":   { \"type\": \"boolean\" },\n    \"미팅날짜\":       { \"type\": \"string\" },\n    \"이메일요약\":     { \"type\": \"string\" },\n    \"참석자\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"당일시작\":       { \"type\": \"string\" },\n    \"당일종료\":       { \"type\": \"string\" },\n    \"슬랙메시지\":     { \"type\": \"string\" }\n  },\n  \"required\": [\n    \"가용슬롯\",\n    \"추천슬롯\",\n    \"미팅가능여부\",\n    \"미팅날짜\",\n    \"이메일요약\",\n    \"참석자\",\n    \"당일시작\",\n    \"당일종료\",\n    \"슬랙메시지\"\n  ]\n}\n\n5. 예시 (가용 슬롯 있음)  \n{\n  \"가용슬롯\": [\n    { \"시작시간\": \"2025-07-16 13:00:00\", \"종료시간\": \"2025-07-16 14:00:00\" },\n    { \"시작시간\": \"2025-07-16 15:00:00\", \"종료시간\": \"2025-07-16 16:00:00\" }\n  ],\n  \"추천슬롯\": {\n    \"시작시간\": \"2025-07-16 13:00:00\",\n    \"종료시간\": \"2025-07-16 14:00:00\"\n  },\n  \"미팅가능여부\": true,\n  \"미팅날짜\": \"2025-07-16\",\n  \"이메일요약\": \"성공지식백과와 미팅 요청\",\n  \"참석자\": [\"alice@example.com\", \"bob@example.com\"],\n  \"당일시작\": \"2025-07-16 00:00:00\",\n  \"당일종료\": \"2025-07-16 23:59:59\",\n  \"슬랙메시지\": \"\"\n}\n\n6. 예시 (가용 슬롯 없음)  \n{\n  \"가용슬롯\": [],\n  \"추천슬롯\": {\n    \"시작시간\": \"\",\n    \"종료시간\": \"\"\n  },\n  \"미팅가능여부\": false,\n  \"미팅날짜\": \"2025-07-16\",\n  \"이메일요약\": \"성공지식백과와 미팅 요청\",\n  \"참석자\": [\"alice@example.com\", \"bob@example.com\"],\n  \"당일시작\": \"2025-07-16 00:00:00\",\n  \"당일종료\": \"2025-07-16 23:59:59\",\n  \"슬랙메시지\": \"요청된 미팅 '성공지식백과와 미팅 요청'은 지정된 시간이 없어 자동으로 가용 슬롯을 계산했으나, 2025-07-16에는 가능한 시간이 없어 일정이 등록되지 않았습니다.\"\n}\n\n7. 출력 규칙  \n- 위 JSON 스키마에 맞춰 객체 하나만 출력  \n- 설명·주석·추가 텍스트 금지\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        980,
+        280
+      ],
+      "id": "60adad47-c82b-4297-85d3-cd28a5948f26",
+      "name": "일정 시간 컨펌 2",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=미팅요약:  {{ $json.output['미팅요약'] }}\n미팅성격: {{ $json.output['미팅성격'] }}\n미팅날짜: {{ $json.output['미팅날짜'] }}\n시작시간: {{ $json.output['미팅시간']['시작'] }}\n종료시간: {{ $json.output['미팅시간']['종료'] }}\n참석자: {{ $json.output['참석자'] }}\n\n오늘: {{ $now }} ",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "SYSTEM PROMPT – 가용성 확인 에이전트 (True 브랜치)\n\n역할  \n이미 확정된 시작·종료 시각을 Google Calendar Available 도구로 확인하여  \n해당 시간대의 가용 여부, 참석자 명단, 미팅요약, 그리고 Slack 메시지를 JSON으로 반환하는 가용성 확인 에이전트입니다.\n\n도구  \nGet_Evetns: 해당 시간대에 가능한지 확인: 항상 체크할것\n\n처리 절차  \n1. 도구 호출로 항상 해당 시간이 가능한지 확인함  \n   {\n     \"tool\": \"Get_Events\",\n     \"start\": \"<미팅 시작>\",\n     \"end\":   \"<미팅 종료>\"\n   }\n\n2. 도구 응답의 available 값을 미팅가능여부 필드에 그대로 매핑  \n3. 미팅 날짜의 00:00:00 과 23:59:59 를 계산해  \n   JSON 객체에 `당일시작`, `당일종료` 필드로 포함  \n4. 입력으로 전달된 **미팅요약**을 `미팅요약` 필드에 그대로 넣음  \n5. Slack 알림을 위한 메시지를 생성해 `슬랙메시지` 필드에 포함  \n   - 미팅가능여부가 true인 경우: 빈 문자열(\"\")  \n   - 미팅가능여부가 false인 경우:  \n     예시: `\"요청된 일정 '주간 프로젝트 점검 회의'은 2025-07-15 15:00:00 ~ 16:00:00 사이로, 해당 시간대에 기존 일정이 있어 등록되지 않았습니다.\"`  \n6. 아래 JSON 스키마에 맞춰 **객체 하나만** 출력  \n   (설명·주석·추가 텍스트 불가)\n\nJSON 출력 스키마 (n8n)  \n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"미팅가능여부\": { \"type\": \"boolean\" },\n    \"시작시간\":     { \"type\": \"string\" },\n    \"종료시간\":     { \"type\": \"string\" },\n    \"참석자\":     {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"당일시작\":     { \"type\": \"string\" },\n    \"당일종료\":     { \"type\": \"string\" },\n    \"미팅요약\":     { \"type\": \"string\" },\n    \"슬랙메시지\":   { \"type\": \"string\" }\n  },\n  \"required\": [\n    \"미팅가능여부\",\n    \"시작시간\",\n    \"종료시간\",\n    \"참석자\",\n    \"당일시작\",\n    \"당일종료\",\n    \"미팅요약\",\n    \"슬랙메시지\"\n  ]\n}\n\n예시 (도구 응답 available = false)  \n{\n  \"미팅가능여부\": false,\n  \"시작시간\": \"2025-07-15 15:00:00\",\n  \"종료시간\": \"2025-07-15 16:00:00\",\n  \"참석자\": [\"alice@example.com\", \"bob@example.com\"],\n  \"당일시작\": \"2025-07-15 00:00:00\",\n  \"당일종료\": \"2025-07-15 23:59:59\",\n  \"미팅요약\": \"주간 프로젝트 점검 회의\",\n  \"슬랙메시지\": \"요청된 일정 '주간 프로젝트 점검 회의'은 2025-07-15 15:00:00 ~ 16:00:00 사이로, 해당 시간대에 기존 일정이 있어 등록되지 않았습니다.\"\n}\n\n예시 (도구 응답 available = true)  \n{\n  \"미팅가능여부\": true,\n  \"시작시간\": \"2025-07-15 15:00:00\",\n  \"종료시간\": \"2025-07-15 16:00:00\",\n  \"참석자\": [\"alice@example.com\", \"bob@example.com\"],\n  \"당일시작\": \"2025-07-15 00:00:00\",\n  \"당일종료\": \"2025-07-15 23:59:59\",\n  \"미팅요약\": \"주간 프로젝트 점검 회의\",\n  \"슬랙메시지\": \"\"\n}\n\n출력 규칙  \n- Google Calendar Available 도구를 반드시 한 번만 호출  \n- 도구 호출 후 위 스키마대로 JSON 객체 하나만 출력"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        980,
+        -260
+      ],
+      "id": "47a72941-6072-44d1-afc4-a2eea0052150",
+      "name": "일정 시간 컨펌 1",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "business.successwiki@gmail.com",
+          "mode": "list",
+          "cachedResultName": "business.successwiki@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $json.output['미팅시간']['시작'] }}",
+        "timeMax": "={{ $json.output['미팅시간']['종료'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1140,
+        -20
+      ],
+      "id": "b5ae6b7b-a381-4188-b5ce-dd1b0e7e2771",
+      "name": "Get_Events1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "90Dhr22nVuRsWhcX",
+          "name": "Google Calendar account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "일정 요청 분석",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "일정 등록 (시간 지정)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "일정 요청 분석": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Email Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Email Data": {
+      "main": [
+        [
+          {
+            "node": "일정 요청 분석",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Email Details": {
+      "main": [
+        [
+          {
+            "node": "Parse Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "일정 요청 분석",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "일정 시간 컨펌 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "일정 시간 컨펌 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "일정 시간 컨펌 2",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "일정 시간 컨펌 1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "일정 시간 컨펌 2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "일정 시간 컨펌 1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "일정 등록 (시간 지정)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "응답 전송 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "일정 등록 (시간 미지정)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "응답 전송 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "일정 등록 (시간 미지정)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "일정 등록 (시간 미지정)": {
+      "main": [
+        [
+          {
+            "node": "최종 안내 메시지 전송 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "일정 등록 (시간 지정)": {
+      "main": [
+        [
+          {
+            "node": "최종 안내 메시지 전송 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "최종 안내 메시지 전송 1": {
+      "main": [
+        []
+      ]
+    },
+    "Create Event 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 미지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Event 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 미지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Event 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 미지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 미지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 시간 컨펌 2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event 1": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Event 1": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Event  1": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events 1": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 등록 (시간 지정)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "일정 시간 컨펌 2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "일정 시간 컨펌 1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Events1": {
+      "ai_tool": [
+        [
+          {
+            "node": "일정 시간 컨펌 1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6bd3128a-8eae-4c12-96a3-9407d8c21d93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6584c3ee4a1bba8a530380aa4465cf16feecea86d0c373cc0dd44d8c1497f81e"
+  },
+  "id": "dN9hsvHigYQ0xvQM",
+  "tags": []
+}

@@ -1,0 +1,189 @@
+{
+  "name": "AI 자동응답 챗봇",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "71093e40-7fb2-4dbc-8ac0-8c98630a5df0",
+      "name": "When chat message received",
+      "webhookId": "fc2f5d86-02d8-4641-ae7f-285dd1b186c3"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "당신은 이 쇼핑몰의 고객 응대를 담당하는 AI 상담원입니다.  \n고객의 질문에 Vector Store Data 를 바탕으로 빠르고 친절하게 답변해주세요.  \n항상 정중하고 부드러운 말투를 사용하며, 잘 모르는 내용은 “정확한 확인이 필요합니다”라고 안내하세요.  \n배송, 환불, 교환, 주문, 운영시간, 쿠폰, 회원제도 등 다양한 항목이 포함되어 있습니다."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        220,
+        0
+      ],
+      "id": "661def4f-fea3-4fe0-8345-cf77aa78553d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        220
+      ],
+      "id": "aac54bf4-5ee4-4541-9135-7f7c48333351",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        340,
+        240
+      ],
+      "id": "2b2c6e9d-70c3-4a96-b3ca-c38e3ec34a7c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "Knowledge_Base",
+        "toolDescription": "Check the data in Pinecone Vector Store before answering",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "chatbot-ai",
+          "mode": "list",
+          "cachedResultName": "chatbot-ai"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        460,
+        260
+      ],
+      "id": "7960fa9a-3867-4320-b3fb-6d563ab9dc43",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "fCeNsnyoh1YVnMPG",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        600,
+        420
+      ],
+      "id": "af996aaa-f818-49b3-90df-0386a2cdd937",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6ddb54dc-5bf7-4df8-8ee8-bd740bd96787",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6584c3ee4a1bba8a530380aa4465cf16feecea86d0c373cc0dd44d8c1497f81e"
+  },
+  "id": "yps1nhTrEI2D0e3W",
+  "tags": []
+}

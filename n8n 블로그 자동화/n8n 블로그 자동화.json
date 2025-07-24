@@ -1,0 +1,941 @@
+{
+  "name": "AI 블로그 자동화",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "keyword-assignment",
+              "name": "keyword",
+              "value": "={{ $json.query.keyword }}",
+              "type": "string"
+            },
+            {
+              "id": "topic-assignment",
+              "name": "topic",
+              "value": "={{ $json.query.topic }}",
+              "type": "string"
+            },
+            {
+              "id": "target-audience",
+              "name": "targetAudience",
+              "value": "={{ $json.query.audience }}",
+              "type": "string"
+            },
+            {
+              "id": "desired-paragraphs",
+              "name": "desiredParagraphs",
+              "value": "={{ $json.query.paragraphs }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "729beb70-9cdf-4c0a-9102-3b4089d12788",
+      "name": "Set Blog Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -1740,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.topic }}에 대한 종합적인 블로그 아웃라인을 작성해주세요.\n\n대상 독자: {{ $json.targetAudience }}\n중점 키워드: {{ $json.keyword }}\n\n※ **모든 텍스트는 한국어로 작성**하십시오.\n\n다음 항목을 모두 포함해 주세요:\n1. 핵심 주제(Main thesis) 및 주요 메시지(Key message)\n2. 3–5개의 주요 포인트\n3. 톤·스타일 가이드라인\n4. 포함할 핵심 사실/통계\n5. 콜투액션(Call-to-Action) 전략#",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=역할: 시니어 콘텐츠 전략가\n목표: 주제·독자·키워드를 분석해 글의 전체 구조와 핵심 메시지를 정리한다.\n출력: thesis, keyMessage, mainPoints[], toneStyle, factsStats[], callToAction — 6개 필드를 포함한 JSON 객체. "
+        }
+      },
+      "id": "b0d86d78-c71a-4977-beaa-4a53d1be6e8d",
+      "name": "AI Agent 1 - Context & Outline",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1540,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "maxTokens": 800,
+          "temperature": 0.5
+        }
+      },
+      "id": "02e1fc3f-bd8f-42f2-a543-d6b7c4de9d85",
+      "name": "OpenAI Model - Context",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1540,
+        380
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=⚙️ 입력\n- 블로그 아웃라인: \n{{ $json.output.thesis }}\n{{ $json.output.keyMessage }}\n{{ $json.output.mainPoints[0] }}\n{{ $json.output.mainPoints[1] }}\n{{ $json.output.mainPoints[2] }}\n{{ $json.output.mainPoints[3] }}\n{{ $json.output.mainPoints[4] }}\n{{ $json.output.toneStyle }}\n{{ $json.output.factsStats }}\n{{ $json.output.callToAction }}\n\n- 주제(Title): {{ $('Set Blog Parameters').item.json.topic }}\n\n📝 작업\n블로그의 **인트로(Introduction)** 를 작성해 주세요.\n\n🔧 작성 지침\n1. **모든 문장은 한국어**로 작성합니다.\n2. 반환 형식:\n   ```html\n   <h1>{{주제}}</h1>\n   <p>단락 1 … (75–100 단어)</p>\n   <p>단락 2 … (75–100 단어)</p>\n   <!-- 필요 시 세 번째 단락 -->\n#",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "역할: 인트로 작성 전문가\n목표: 150–200 단어 분량의 인트로로 독자의 관심을 끌고 글의 가치를 명확히 제시한다.\n출력:\n• heading — <h1>…</h1>\n• content — 2 ~ 3개의 <p> 태그가 연속된 HTML 문자열"
+        }
+      },
+      "id": "8df71e77-fb1f-422d-ad3d-22bcfa385350",
+      "name": "AI Agent 2 - Introduction",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1060,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "maxTokens": 400,
+          "temperature": 0.7
+        }
+      },
+      "id": "8ce3196f-0879-48ee-90cf-b95cdc439df5",
+      "name": "OpenAI Model - Intro",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        20
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=⚙️ 입력\n1. 블로그 아웃라인: \n{{ $('AI Agent 1 - Context & Outline').item.json.output.thesis }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.keyMessage }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.mainPoints }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.toneStyle }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.factsStats }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.callToAction }}\n\n\n2. 인트로: \n{{ $json.output.sections[0].heading }}\n{{ $json.output.sections[0].content }}\n\n📝 작업\n- 아웃라인의 **mainPoints** 개수(=N)를 확인합니다.\n- {{ $('Set Blog Parameters').item.json.desiredParagraphs }} 개를 넘지 않는 범위에서\n  N개의 ‘본문 섹션’을 작성합니다.\n  (메인 포인트당 1개 섹션이 기본이며, 필요 시 조정)\n\n🔧 작성 규칙\n1. **모든 텍스트는 한국어**로 작성합니다.\n2. **각 섹션**은 아래 형태의 **HTML 전용 문자열**로 반환합니다.  \n   다른 태그·주석·포맷 금지.\n   ```html\n   <h2>소제목</h2>\n   <p>첫 번째 단락 … (100–130단어)</p>\n   <p>두 번째 단락 … (100–130단어)</p>\n   <!-- 필요 시 세 번째 단락 -->\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "역할: 본문 섹션 작성 담당\n목표: 아웃라인과 인트로를 토대로 메인 포인트마다 1개 섹션(2–3 단락)을 작성해 흐름을 완성한다.\n출력: sections 배열. 각 요소는\n• heading — <h2>…</h2>\n• content — <p>…</p><p>…</p> 형식의 HTML 문자열"
+        }
+      },
+      "id": "d51316fc-127a-40df-b20c-f79c146ba8c1",
+      "name": "AI Agent 3 - Paragraph Orchestrator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1060,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "maxTokens": 1500,
+          "temperature": 0.6
+        }
+      },
+      "id": "2b91dd20-7774-429f-85aa-a3b19c0a67f8",
+      "name": "OpenAI Model - Paragraphs",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        380
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=⚙️ 입력  \n1. 아웃라인:\n{{ $('AI Agent 1 - Context & Outline').item.json.output.thesis }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.keyMessage }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.mainPoints }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.toneStyle }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.factsStats }}\n{{ $('AI Agent 1 - Context & Outline').item.json.output.callToAction }}\n\n2. 인트로: \n{{ $('AI Agent 2 - Introduction').item.json.output.sections[0].heading }}\n{{ $('AI Agent 2 - Introduction').item.json.output.sections[0].content }}\n\n\n3. 본문 섹션: \n{{ $json.output.sections[0].heading }}\n{{ $json.output.sections[0].content }}\n\n{{ $json.output.sections[1].heading }}\n{{ $json.output.sections[1].content }}\n\n{{ $json.output.sections[2].heading }}\n{{ $json.output.sections[2].content }}\n\n\n📝 작업  \n‘{{ $('Set Blog Parameters').item.json.topic }}’ 블로그 글의 **결론(Conclusion)** 섹션을 작성합니다.\n\n🔧 작성 지침  \n1. **모든 문장은 한국어**로 작성합니다.  \n2. **HTML 전용** – 아래 구조를 그대로 사용하세요.  \n   ```html\n   <h2>결론에 어울리는 제목, 결론 이나 결말은 사용하지 말고 의미있는 말</h2>\n   <p>첫 번째 단락 … (75–100단어)</p>\n   <p>두 번째 단락 … (75–100단어)</p>\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "역할: 결론 작성 전문가\n목표: 글의 핵심을 요약하고 실행 가능한 콜투액션을 제시해 150–200 단어로 글을 마무리한다.\n출력: sections 배열 한 개. 그 객체는\n• heading — <h2>Conclusion</h2>\n• content — 두 개 <p> 단락이 연속된 HTML 문자열"
+        }
+      },
+      "id": "9c7563a0-8469-499c-86ec-c76ef2b8fb2a",
+      "name": "AI Agent 4 - Conclusion",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1060,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "maxTokens": 400,
+          "temperature": 0.7
+        }
+      },
+      "id": "dc068dfb-3c26-4195-81f5-d46b9a688f01",
+      "name": "OpenAI Model - Conclusion",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        780
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a2158b97-f70a-41d7-bb02-2832434ac077",
+              "name": "서론",
+              "value": "={{ $('AI Agent 2 - Introduction').item.json.output.sections }}",
+              "type": "array"
+            },
+            {
+              "id": "441669ee-6f3e-445e-964a-9d969c2f3bcc",
+              "name": "본론",
+              "value": "={{ $('AI Agent 3 - Paragraph Orchestrator').item.json.output.sections }}",
+              "type": "array"
+            },
+            {
+              "id": "49288772-750a-44fa-8a29-fb6e582a6b40",
+              "name": "결론",
+              "value": "={{ $json.output.sections }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0261b887-1646-4229-ba08-73c108e3e529",
+      "name": "Set All Sections",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -740,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=⚙️ 입력\n- 서론 배열: {{ $json[\"서론\"] }}        // 예: [{ heading, content }]\n- 본론 배열: { $json[\"본론\"] }}    {    // 예: [{ heading, content }, …]\n- 결론 배열: {{ $json[\"결론\"] }}        // 예: [{ heading, content }]\n\n📝 작업\n각 섹션(서론 1개 + 본론 N개)에 어울리는 **DALL·E 이미지 프롬프트**를 작성합니다.  \n⚠️ 결론(Conclusion) 섹션에는 프롬프트를 생성하지 않습니다.\n\n🔧 작성 지침\n1. **모든 프롬프트는 한국어**로 작성합니다.  \n2. 길이: **50–100 단어**.  \n3. 해당 섹션의 실제 내용·키워드를 반영합니다.  \n4. 스타일: ‘모던, 미니멀, 프로페셔널’ 을 포함합니다.  \n5. 색상: 주제 “{{ $('Set Blog Parameters').item.json.topic }}”와 연관된 컬러를 명시합니다.  \n6. **텍스트가 없는 이미지**를 요청한다는 문구를 반드시 포함합니다.  \n\n⛔️ **아래 JSON 배열** 형식으로만 응답하십시오. 추가 텍스트 금지.\n```json\n[\n  {\n    \"section\": \"introduction\",\n    \"prompt\": \"…서론 이미지를 위한 상세 프롬프트…\"\n  },\n  {\n    \"section\": \"paragraph_1\",\n    \"prompt\": \"…첫 번째 본문 섹션 프롬프트…\"\n  }\n  // paragraph_2, paragraph_3 … 본론 섹션 수만큼 이어서 작성\n]\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert at creating detailed image generation prompts. You analyze text content and create visual prompts that complement and enhance the written material. Your prompts are specific, artistic, and result in high-quality images."
+        }
+      },
+      "id": "b258676a-ff8d-4104-b86c-751783e114fe",
+      "name": "AI - Generate Image Prompts",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -880,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "maxTokens": 1000,
+          "temperature": 0.8
+        }
+      },
+      "id": "9bc9105f-a3e7-4017-af94-c0d7a20d4542",
+      "name": "OpenAI Model - Prompts",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        1140
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const list = $json.output.images;\nreturn list.map(img => ({\n  json: {\n    section: img.section,\n    prompt: img.prompt\n  }\n}));"
+      },
+      "id": "3f9b9708-80d1-4e29-9f46-0ce5eeb6b315",
+      "name": "Parse Image Prompts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -540,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": "=1",
+        "options": {}
+      },
+      "id": "cd69833a-9a41-486c-b9ff-ab05e9a4b53d",
+      "name": "Loop Over Image Prompts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -300,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "prompt": "={{ $('Parse Image Prompts').item.json.prompt }}",
+        "options": {
+          "size": "1792x1024",
+          "style": "natural",
+          "returnImageUrls": true
+        }
+      },
+      "id": "003eb0c7-a2b7-4336-a934-87f21b89ace5",
+      "name": "Generate Image",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.4,
+      "position": [
+        -100,
+        960
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "42d4b382-e732-4e76-b6a8-7e437e0a1c18",
+              "name": "URL",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d956bddc-6c9c-4cb7-b05d-89ad7e20209c",
+      "name": "Format Image Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        100,
+        960
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "875e3257-30a0-4826-a841-b131b63b86af",
+      "name": "Images Complete",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        580
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9bb9464c-37c0-4e8b-bc2e-765397f923dd",
+      "name": "Merge Content & Images",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        100,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─────────────────────────────────────────────\n// INPUT: items[0]  ➜  콘텐츠 오브젝트\n//        items[1+] ➜  { URL: \"…\" } 형태\n// OUTPUT: 1개의 아이템  ➜  { contentData, imageMap }\n// ─────────────────────────────────────────────\n\n// 1) 분리\nconst contentData = items[0].json;      // 서론·본론·결론\nconst urlItems    = items.slice(1);     // 이미지 URL 객체들\n\n// 2) 본론 단락 수 계산\nconst numParagraphs = contentData[\"본론\"].length;      // N\nconst expectedUrls  = 1 + numParagraphs;               // 서론 1 + 본론 N\n\nif (urlItems.length !== expectedUrls) {\n  throw new Error(`URL 개수(${urlItems.length})가 예상(${expectedUrls})과 다릅니다.`);\n}\n\n// 3) imageMap 생성\nconst imageMap = {};\n\n// 서론 → 첫 번째 URL\nimageMap[\"introduction\"] = urlItems[0].json.URL;\n\n// 본론 → paragraph_1 … paragraph_N\nfor (let i = 0; i < numParagraphs; i++) {\n  const key = `paragraph_${i + 1}`;\n  imageMap[key] = urlItems[i + 1].json.URL;\n}\n\n// 4) 결과 반환\nreturn [\n  {\n    json: {\n      contentData,    // 기존 HTML 빌더가 사용\n      imageMap        // 키: 섹션, 값: URL\n    }\n  }\n];\n"
+      },
+      "id": "16293882-6b1d-4d7e-be88-e44ad8fc6dc2",
+      "name": "Build Final Blog Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"thesis\": {\n      \"type\": \"string\",\n      \"description\": \"핵심 주제를 한 문장으로 요약\"\n    },\n    \"keyMessage\": {\n      \"type\": \"string\",\n      \"description\": \"가장 중요한 메시지를 한 줄로 제시\"\n    },\n    \"mainPoints\": {\n      \"type\": \"array\",\n      \"minItems\": 3,\n      \"maxItems\": 5,\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"블로그 본문에서 다룰 3-5개의 주요 포인트\"\n    },\n    \"toneStyle\": {\n      \"type\": \"string\",\n      \"description\": \"톤과 스타일 가이드라인\"\n    },\n    \"factsStats\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"포함할 핵심 사실이나 통계\"\n    },\n    \"callToAction\": {\n      \"type\": \"string\",\n      \"description\": \"독자 행동 유도를 위한 콜투액션\"\n    }\n  },\n  \"required\": [\n    \"thesis\",\n    \"keyMessage\",\n    \"mainPoints\",\n    \"toneStyle\",\n    \"callToAction\"\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1380,
+        380
+      ],
+      "id": "d1fa8a1a-11bf-45ae-b57c-aa527e49b428",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"sections\": {\n      \"type\": \"array\",\n      \"description\": \"메인 포인트별 섹션\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"heading\": {\n            \"type\": \"string\",\n            \"description\": \"<h2> 태그를 포함한 소제목\"\n          },\n          \"content\": {\n            \"type\": \"string\",\n            \"description\": \"2–3개의 <p> 단락이 연속으로 들어 있는 HTML 문자열\"\n          }\n        },\n        \"required\": [\"heading\", \"content\"]\n      },\n      \"minItems\": 1\n    }\n  },\n  \"required\": [\"sections\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -900,
+        380
+      ],
+      "id": "261a6481-e447-49ec-9bd6-5ac030acd21c",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"sections\": {\n      \"type\": \"array\",\n      \"description\": \"인트로 섹션 배열(보통 1개)\",\n      \"minItems\": 1,\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"heading\": {\n            \"type\": \"string\",\n            \"description\": \"<h1>블로그 제목</h1>\"\n          },\n          \"content\": {\n            \"type\": \"string\",\n            \"description\": \"2–3개의 <p> 단락이 연속으로 들어 있는 HTML 문자열\"\n          }\n        },\n        \"required\": [\"heading\", \"content\"]\n      }\n    }\n  },\n  \"required\": [\"sections\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -900,
+        20
+      ],
+      "id": "95b59807-60e2-4198-a282-1b354041f1ef",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"sections\": {\n      \"type\": \"array\",\n      \"description\": \"결론 섹션(보통 1개)\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"heading\": {\n            \"type\": \"string\",\n            \"description\": \"<h2>Conclusion</h2> 형태의 제목 태그\"\n          },\n          \"content\": {\n            \"type\": \"string\",\n            \"description\": \"두 개의 <p> 단락이 연속으로 들어 있는 HTML 문자열\"\n          }\n        },\n        \"required\": [\"heading\", \"content\"]\n      },\n      \"minItems\": 1\n    }\n  },\n  \"required\": [\"sections\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -900,
+        780
+      ],
+      "id": "ec8cd5a8-3b94-405e-8fb2-8c908568fe12",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"images\": {\n      \"type\": \"array\",\n      \"description\": \"섹션별 이미지 프롬프트 배열\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"section\": {\n            \"type\": \"string\",\n            \"description\": \"섹션 ID (ex: introduction, paragraph_1, …)\"\n          },\n          \"prompt\": {\n            \"type\": \"string\",\n            \"description\": \"해당 섹션 이미지 생성 프롬프트\"\n          }\n        },\n        \"required\": [\"section\", \"prompt\"]\n      }\n    }\n  },\n  \"required\": [\"images\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -720,
+        1180
+      ],
+      "id": "acf0a827-3f9f-4aa4-ae2f-0a3a57527e58",
+      "name": "Structured Output Parser4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { contentData, imageMap } = items[0].json;\n\n/* ────────── HTML 빌드 ────────── */\nlet html = `<!DOCTYPE html><html lang=\"ko\"><head>\n<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>${contentData[\"서론\"][0].heading.replace(/<[^>]+>/g,'')}</title>\n<style>\nbody{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;line-height:1.8;margin:0;padding:0;background:#f5f7fa;color:#2c3e50}\n.container{max-width:800px;margin:0 auto;padding:24px}\nimg{max-width:100%;height:auto;border-radius:12px;margin:24px 0}\nh1,h2{color:#1d8348;margin:40px 0 20px}\np{margin:0 0 18px;text-align:justify}\n</style></head><body><div class=\"container\">`;\n\n/* ── 서론 ── */\nconst intro = contentData[\"서론\"][0];\nhtml += `${intro.heading}`;                                   // 제목 먼저\nif (imageMap.introduction) html += `<img src=\"${imageMap.introduction}\" alt=\"intro image\">`;\nhtml += `${intro.content}`;\n\n/* ── 본론 ── */\ncontentData[\"본론\"].forEach((sec, i) => {\n  html += `${sec.heading}`;                                   // 제목\n  const key = `paragraph_${i+1}`;\n  if (imageMap[key]) html += `<img src=\"${imageMap[key]}\" alt=\"paragraph ${i+1} image\">`;\n  html += `${sec.content}`;                                   // 글\n});\n\n/* ── 결론 ── */\nconst concl = contentData[\"결론\"][0];\nhtml += `<h2>${concl.heading.replace(/<[^>]+>/g,'')}</h2>${concl.content}`;\n\nhtml += `</div></body></html>`;\n\n/* ── 불필요한 줄바꿈·공백 제거 ── */\nhtml = html.replace(/\\s*\\n+\\s*/g,'');\n\n/* ── Webhook1의 값 가져오기 ── */\nconst record = $('Webhook1').first().json.query.record;\n\nreturn [\n  { json: { htmlContent: html } },\n  { json: { record: record } }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        160
+      ],
+      "id": "15f9a0e7-855a-4a91-8bfb-1c12d8c8a916",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "path": "4313f628-4232-4439-a60f-f0cbba040526",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1940,
+        160
+      ],
+      "id": "4f1120de-b983-45a7-a1b4-2383a7b71f79",
+      "name": "Webhook1",
+      "webhookId": "4313f628-4232-4439-a60f-f0cbba040526"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appVG31Fu8rqV9p2I",
+          "mode": "list",
+          "cachedResultName": "AI 비즈니스 자동화 - 블로그",
+          "cachedResultUrl": "https://airtable.com/appVG31Fu8rqV9p2I"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblNncUqMCXV9kWxD",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appVG31Fu8rqV9p2I/tblNncUqMCXV9kWxD"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "전체 HTML": "={{ $json.htmlContent }}",
+            "record": "={{ $('Webhook1').all()[0].json.query.record }}"
+          },
+          "matchingColumns": [
+            "record"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "주제",
+              "displayName": "주제",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "키워드",
+              "displayName": "키워드",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "타깃 오디언스",
+              "displayName": "타깃 오디언스",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "본문 수",
+              "displayName": "본문 수",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "자동화 시작",
+              "displayName": "자동화 시작",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "전체 HTML",
+              "displayName": "전체 HTML",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "record",
+              "displayName": "record",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        760,
+        160
+      ],
+      "id": "1c606cc9-4556-42f4-be19-23d505cb9740",
+      "name": "Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set Blog Parameters": {
+      "main": [
+        [
+          {
+            "node": "AI Agent 1 - Context & Outline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent 1 - Context & Outline": {
+      "main": [
+        [
+          {
+            "node": "AI Agent 2 - Introduction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Context": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent 1 - Context & Outline",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent 2 - Introduction": {
+      "main": [
+        [
+          {
+            "node": "AI Agent 3 - Paragraph Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Intro": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent 2 - Introduction",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent 3 - Paragraph Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "AI Agent 4 - Conclusion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Paragraphs": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent 3 - Paragraph Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent 4 - Conclusion": {
+      "main": [
+        [
+          {
+            "node": "Set All Sections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Conclusion": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent 4 - Conclusion",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set All Sections": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Image Prompts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Content & Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate Image Prompts": {
+      "main": [
+        [
+          {
+            "node": "Parse Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Prompts": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Generate Image Prompts",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Image Prompts": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Image Prompts": {
+      "main": [
+        [
+          {
+            "node": "Images Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Format Image Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Image Data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Images Complete": {
+      "main": [
+        [
+          {
+            "node": "Merge Content & Images",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Content & Images": {
+      "main": [
+        [
+          {
+            "node": "Build Final Blog Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent 1 - Context & Outline",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent 3 - Paragraph Orchestrator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent 2 - Introduction",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent 4 - Conclusion",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI - Generate Image Prompts",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Blog Post": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Set Blog Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9f9bf469-7285-4537-b8c9-8bfa23028bcb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6584c3ee4a1bba8a530380aa4465cf16feecea86d0c373cc0dd44d8c1497f81e"
+  },
+  "id": "PyVwchAtw9yNhIUG",
+  "tags": []
+}

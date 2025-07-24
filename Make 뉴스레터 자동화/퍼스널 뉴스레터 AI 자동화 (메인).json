@@ -1,0 +1,1669 @@
+{
+    "name": "퍼스널 뉴스레터 AI 자동화",
+    "flow": [
+        {
+            "id": 1,
+            "module": "google-sheets:watchRows",
+            "version": 2,
+            "parameters": {
+                "from": "drive",
+                "mode": "select",
+                "limit": 10,
+                "sheetId": "설문지 응답 시트1",
+                "__IMTCONN__": 8513840,
+                "spreadsheetId": "/11YGXnI-8jugd1uyEJZaZohx83KeUl42PLrcPWAnvMLU",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueRenderOption": "FORMATTED_VALUE",
+                "dateTimeRenderOption": "FORMATTED_STRING"
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
+                "restore": {
+                    "parameters": {
+                        "from": {
+                            "label": "My Drive"
+                        },
+                        "mode": {
+                            "label": "Search by path"
+                        },
+                        "sheetId": {
+                            "label": "설문지 응답 시트1"
+                        },
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            },
+                            "label": "My Google connection (business.successwiki@gmail.com)"
+                        },
+                        "spreadsheetId": {
+                            "path": [
+                                "AI 자동화 컨설팅(응답)"
+                            ]
+                        },
+                        "includesHeaders": {
+                            "label": "Yes"
+                        },
+                        "valueRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted value"
+                        },
+                        "dateTimeRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted string"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    },
+                    {
+                        "name": "mode",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "select",
+                                "fromAll",
+                                "map"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                true,
+                                false
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit",
+                        "required": true
+                    },
+                    {
+                        "name": "valueRenderOption",
+                        "type": "select",
+                        "label": "Value render option",
+                        "validate": {
+                            "enum": [
+                                "FORMATTED_VALUE",
+                                "UNFORMATTED_VALUE",
+                                "FORMULA"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "dateTimeRenderOption",
+                        "type": "select",
+                        "label": "Date and time render option",
+                        "validate": {
+                            "enum": [
+                                "SERIAL_NUMBER",
+                                "FORMATTED_STRING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share",
+                                "team"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet ID",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "tableFirstRow",
+                        "type": "text",
+                        "label": "Row with headers",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__ROW_NUMBER__",
+                        "type": "number",
+                        "label": "Row number"
+                    },
+                    {
+                        "name": "__SPREADSHEET_ID__",
+                        "type": "text",
+                        "label": "Spreadsheet ID"
+                    },
+                    {
+                        "name": "__SHEET__",
+                        "type": "text",
+                        "label": "Sheet"
+                    },
+                    {
+                        "name": "0",
+                        "type": "text",
+                        "label": "타임스탬프 (A)"
+                    },
+                    {
+                        "name": "1",
+                        "type": "text",
+                        "label": "이름 (B)"
+                    },
+                    {
+                        "name": "2",
+                        "type": "text",
+                        "label": "이메일 주소 (C)"
+                    },
+                    {
+                        "name": "3",
+                        "type": "text",
+                        "label": "직업 (D)"
+                    },
+                    {
+                        "name": "4",
+                        "type": "text",
+                        "label": "자동화 레벨 (E)"
+                    },
+                    {
+                        "name": "5",
+                        "type": "text",
+                        "label": "관심있는 도구 (F)"
+                    },
+                    {
+                        "name": "6",
+                        "type": "text",
+                        "label": "자동화하고 싶은 작업 (G)"
+                    },
+                    {
+                        "name": "7",
+                        "type": "text",
+                        "label": "지금 가장 궁금한 점 (H)"
+                    },
+                    {
+                        "name": "8",
+                        "type": "text",
+                        "label": "(I)"
+                    },
+                    {
+                        "name": "9",
+                        "type": "text",
+                        "label": "(J)"
+                    },
+                    {
+                        "name": "10",
+                        "type": "text",
+                        "label": "(K)"
+                    },
+                    {
+                        "name": "11",
+                        "type": "text",
+                        "label": "(L)"
+                    },
+                    {
+                        "name": "12",
+                        "type": "text",
+                        "label": "(M)"
+                    },
+                    {
+                        "name": "13",
+                        "type": "text",
+                        "label": "(N)"
+                    },
+                    {
+                        "name": "14",
+                        "type": "text",
+                        "label": "(O)"
+                    },
+                    {
+                        "name": "15",
+                        "type": "text",
+                        "label": "(P)"
+                    },
+                    {
+                        "name": "16",
+                        "type": "text",
+                        "label": "(Q)"
+                    },
+                    {
+                        "name": "17",
+                        "type": "text",
+                        "label": "(R)"
+                    },
+                    {
+                        "name": "18",
+                        "type": "text",
+                        "label": "(S)"
+                    },
+                    {
+                        "name": "19",
+                        "type": "text",
+                        "label": "(T)"
+                    },
+                    {
+                        "name": "20",
+                        "type": "text",
+                        "label": "(U)"
+                    },
+                    {
+                        "name": "21",
+                        "type": "text",
+                        "label": "(V)"
+                    },
+                    {
+                        "name": "22",
+                        "type": "text",
+                        "label": "(W)"
+                    },
+                    {
+                        "name": "23",
+                        "type": "text",
+                        "label": "(X)"
+                    },
+                    {
+                        "name": "24",
+                        "type": "text",
+                        "label": "(Y)"
+                    },
+                    {
+                        "name": "25",
+                        "type": "text",
+                        "label": "(Z)"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 3,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 2,
+                            "module": "openai-gpt-3:CreateCompletion",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 8400299
+                            },
+                            "mapper": {
+                                "select": "chat",
+                                "temperature": "1",
+                                "top_p": "1",
+                                "n_completions": "1",
+                                "model": "chatgpt-4o-latest",
+                                "max_tokens": "2048",
+                                "messages": [
+                                    {
+                                        "role": "system",
+                                        "content": "당신은 고급 자동화 전문가이며, 사용자 응답 데이터를 기반으로 ‘퍼스널 뉴스레터 아이스브레이킹 이메일’을 생성하는 AI입니다.\r\n\r\n사용자는 자동화 관련 질문에 응답하였으며, 당신은 그 데이터를 바탕으로 각 사용자의 **자동화 숙련도(초보자/숙련자/고수)**에 따라 말투, 톤, 강조 포인트를 달리한 뉴스레터 이메일을 작성해야 합니다.\r\n\r\n📌 당신의 역할:\r\n\r\n1. 응답자의 자동화 숙련도에 따라 아래 조건을 반영한 문장을 구성하세요.\r\n   - 초보자: 친근하고 격려 중심의 말투. 자동화를 어렵게 느끼지 않도록 쉽게 설명.\r\n   - 숙련자: 실전 중심의 말투. 빠르게 적용 가능한 정보와 예제를 강조.\r\n   - 고수: 전략적이고 기술적 깊이가 있는 말투. 시스템 구조화나 최적화에 초점.\r\n\r\n2. 다음과 같은 사용자 정보를 입력받게 됩니다:\r\n   - 이름\r\n   - 이메일 주소\r\n   - 직업\r\n   - 자동화 레벨 (초보자 / 숙련자 / 고수)\r\n   - 관심 있는 도구 (쉼표로 구분된 리스트)\r\n   - 자동화하고 싶은 작업\r\n   - 지금 가장 궁금한 점\r\n\r\n3. 생성되는 이메일은 다음 구조를 갖습니다:\r\n   - 인사 및 공감 (이름, 직업, 숙련도 기반)\r\n   - 관심 도구/작업에 대한 언급\r\n   - “지금 가장 궁금한 점” 인용 및 이에 대한 반응\r\n   - 해당 뉴스레터의 가치 또는 다음 액션 유도\r\n   - 서명 (성공지식백과 드림)\r\n\r\n4. 이메일은 markdown 또는 일반 텍스트로 출력되며, 너무 포멀하지 않고 실제 사람처럼 자연스럽게 작성되어야 합니다.\r\n\r\n🎯 목표:  \r\n받는 사람이 ‘이건 나만을 위한 이메일이다’라고 느낄 수 있도록 높은 퍼스널라이제이션과 맥락 맞춤이 구현된 텍스트를 생성하는 것.\r\n\r\n예시 문장 패턴을 반복하지 마세요.  \r\n각 응답자의 데이터에 맞춰 자연스럽고 다양하게 생성하세요."
+                                    },
+                                    {
+                                        "role": "user",
+                                        "content": "아래 정보가 폼을 작성한 사람이 응답한 대답입니다 \n\n이름: {{1.`1`}}\n 이메일주소: {{1.`2`}}\n 직업: {{1.`3`}}\n 자동화 레벨: {{1.`4`}}\n 관심있는 도구: {{1.`5`}}\n 자동화하고 싶은 작업: {{1.`6`}}\n 지금 가장 궁금한 점: {{1.`7`}}",
+                                        "imageDetail": "auto"
+                                    }
+                                ],
+                                "response_format": "text"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 600,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "My OpenAI connection",
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "openai-gpt-3"
+                                            }
+                                        }
+                                    },
+                                    "expect": {
+                                        "select": {
+                                            "label": "Create a Chat Completion (GPT and o1 models)"
+                                        },
+                                        "logit_bias": {
+                                            "mode": "chose"
+                                        },
+                                        "stop": {
+                                            "mode": "chose"
+                                        },
+                                        "additionalParameters": {
+                                            "mode": "chose"
+                                        },
+                                        "model": {
+                                            "mode": "chose",
+                                            "label": "chatgpt-4o-latest (system)"
+                                        },
+                                        "messages": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "role": {
+                                                        "mode": "chose",
+                                                        "label": "Developer / System"
+                                                    }
+                                                },
+                                                {
+                                                    "role": {
+                                                        "mode": "chose",
+                                                        "label": "User"
+                                                    },
+                                                    "imageInputType": {
+                                                        "mode": "chose",
+                                                        "label": "Empty"
+                                                    },
+                                                    "imageDetail": {
+                                                        "mode": "chose",
+                                                        "label": "Auto"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "response_format": {
+                                            "mode": "chose",
+                                            "label": "Text"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:openai-gpt-3",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "select",
+                                        "type": "select",
+                                        "label": "Select Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "chat",
+                                                "prompt"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "temperature",
+                                        "type": "number",
+                                        "label": "Temperature",
+                                        "validate": {
+                                            "max": 2,
+                                            "min": 0
+                                        }
+                                    },
+                                    {
+                                        "name": "top_p",
+                                        "type": "number",
+                                        "label": "Top P",
+                                        "validate": {
+                                            "max": 1,
+                                            "min": 0
+                                        }
+                                    },
+                                    {
+                                        "name": "n_completions",
+                                        "type": "number",
+                                        "label": "Number"
+                                    },
+                                    {
+                                        "name": "frequency_penalty",
+                                        "type": "number",
+                                        "label": "Frequency Penalty",
+                                        "validate": {
+                                            "max": 2,
+                                            "min": -2
+                                        }
+                                    },
+                                    {
+                                        "name": "presence_penalty",
+                                        "type": "number",
+                                        "label": "Presence Penalty",
+                                        "validate": {
+                                            "max": 2,
+                                            "min": -2
+                                        }
+                                    },
+                                    {
+                                        "name": "logit_bias",
+                                        "type": "array",
+                                        "label": "Token Probability",
+                                        "spec": {
+                                            "spec": [
+                                                {
+                                                    "name": "token",
+                                                    "type": "text",
+                                                    "label": "Token ID",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "probability",
+                                                    "type": "number",
+                                                    "label": "Probability",
+                                                    "required": true,
+                                                    "validate": {
+                                                        "max": 100,
+                                                        "min": -100
+                                                    }
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Token Probability",
+                                            "name": "value"
+                                        }
+                                    },
+                                    {
+                                        "name": "seed",
+                                        "type": "integer",
+                                        "label": "Seed"
+                                    },
+                                    {
+                                        "name": "stop",
+                                        "type": "array",
+                                        "label": "Stop Sequences",
+                                        "validate": {
+                                            "maxItems": 4
+                                        },
+                                        "spec": {
+                                            "type": "text",
+                                            "label": "Stop Sequence",
+                                            "name": "value"
+                                        }
+                                    },
+                                    {
+                                        "name": "additionalParameters",
+                                        "type": "array",
+                                        "label": "Other Input Parameters",
+                                        "spec": {
+                                            "spec": [
+                                                {
+                                                    "name": "key",
+                                                    "type": "text",
+                                                    "label": "Parameter Name",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "type",
+                                                    "type": "select",
+                                                    "label": "Input Type",
+                                                    "options": [
+                                                        {
+                                                            "label": "Text",
+                                                            "value": "text",
+                                                            "nested": [
+                                                                {
+                                                                    "name": "value",
+                                                                    "type": "text",
+                                                                    "label": "Parameter Value"
+                                                                }
+                                                            ],
+                                                            "default": true
+                                                        },
+                                                        {
+                                                            "label": "Number",
+                                                            "value": "number",
+                                                            "nested": [
+                                                                {
+                                                                    "name": "value",
+                                                                    "type": "number",
+                                                                    "label": "Parameter Value"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "Boolean",
+                                                            "value": "boolean",
+                                                            "nested": [
+                                                                {
+                                                                    "name": "value",
+                                                                    "type": "boolean",
+                                                                    "label": "Parameter Value"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "Date",
+                                                            "value": "date",
+                                                            "nested": [
+                                                                {
+                                                                    "name": "value",
+                                                                    "type": "date",
+                                                                    "label": "Parameter Value"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "Any",
+                                                            "value": "any",
+                                                            "nested": [
+                                                                {
+                                                                    "name": "value",
+                                                                    "type": "any",
+                                                                    "label": "Parameter Value"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Input Parameter",
+                                            "name": "value"
+                                        }
+                                    },
+                                    {
+                                        "name": "model",
+                                        "type": "select",
+                                        "label": "Model",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "max_tokens",
+                                        "type": "uinteger",
+                                        "label": "Max Completion Tokens"
+                                    },
+                                    {
+                                        "name": "messages",
+                                        "type": "array",
+                                        "label": "Messages",
+                                        "required": true,
+                                        "spec": {
+                                            "label": "Message",
+                                            "type": "collection",
+                                            "spec": [
+                                                {
+                                                    "name": "role",
+                                                    "type": "select",
+                                                    "label": "Role",
+                                                    "required": true,
+                                                    "options": {
+                                                        "store": [
+                                                            {
+                                                                "label": "User",
+                                                                "value": "user",
+                                                                "nested": [
+                                                                    {
+                                                                        "help": "Text content of the message on behalf of the selected __Role__.",
+                                                                        "name": "content",
+                                                                        "type": "text",
+                                                                        "label": "Text Content"
+                                                                    },
+                                                                    {
+                                                                        "name": "imageInputType",
+                                                                        "type": "select",
+                                                                        "label": "Image Input Type",
+                                                                        "mappable": false,
+                                                                        "options": [
+                                                                            {
+                                                                                "value": "url",
+                                                                                "label": "URL",
+                                                                                "nested": [
+                                                                                    {
+                                                                                        "name": "imageUrl",
+                                                                                        "label": "Image URL",
+                                                                                        "type": "url",
+                                                                                        "help": "Make sure to use a publicly accessible URL.\nYou can test if your image is publicly accessible by opening the link in an incognito tab."
+                                                                                    }
+                                                                                ]
+                                                                            },
+                                                                            {
+                                                                                "value": "file",
+                                                                                "label": "Image File",
+                                                                                "nested": [
+                                                                                    {
+                                                                                        "name": "imageFile",
+                                                                                        "label": "Image",
+                                                                                        "type": "collection",
+                                                                                        "spec": [
+                                                                                            {
+                                                                                                "name": "imageFilename",
+                                                                                                "type": "filename",
+                                                                                                "label": "Image Filename",
+                                                                                                "semantic": "file:name",
+                                                                                                "extension": [
+                                                                                                    "jpg",
+                                                                                                    "jpeg",
+                                                                                                    "png",
+                                                                                                    "webp",
+                                                                                                    "gif"
+                                                                                                ],
+                                                                                                "help": "Accepted extensions: `.jpg`, `.jpeg`, `.png`, `.webp` and `.gif`."
+                                                                                            },
+                                                                                            {
+                                                                                                "name": "imageData",
+                                                                                                "type": "buffer",
+                                                                                                "label": "Image Data",
+                                                                                                "semantic": "file:data"
+                                                                                            }
+                                                                                        ]
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "name": "imageDetail",
+                                                                        "type": "select",
+                                                                        "label": "Image Detail",
+                                                                        "help": "Recommended value: `Auto`",
+                                                                        "options": [
+                                                                            {
+                                                                                "value": "auto",
+                                                                                "default": true,
+                                                                                "label": "Auto"
+                                                                            },
+                                                                            {
+                                                                                "value": "high",
+                                                                                "label": "High"
+                                                                            },
+                                                                            {
+                                                                                "value": "low",
+                                                                                "label": "Low"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                "label": "Assistant",
+                                                                "value": "assistant",
+                                                                "nested": [
+                                                                    {
+                                                                        "help": "Text content of the message on behalf of the selected __Role__.",
+                                                                        "name": "content",
+                                                                        "type": "text",
+                                                                        "label": "Text Content"
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                "label": "Developer / System",
+                                                                "value": "system",
+                                                                "nested": [
+                                                                    {
+                                                                        "help": "Text content of the message on behalf of the selected __Role__.",
+                                                                        "name": "content",
+                                                                        "type": "text",
+                                                                        "label": "Text Content"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ],
+                                            "name": "value"
+                                        }
+                                    },
+                                    {
+                                        "name": "response_format",
+                                        "type": "select",
+                                        "label": "Response Format",
+                                        "validate": {
+                                            "enum": [
+                                                "text",
+                                                "json_object"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "prediction",
+                                        "type": "text",
+                                        "label": "Predicted Outputs"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "result",
+                                        "type": "any",
+                                        "label": "Result"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "object",
+                                        "type": "text",
+                                        "label": "Object"
+                                    },
+                                    {
+                                        "name": "created",
+                                        "type": "date",
+                                        "label": "Created"
+                                    },
+                                    {
+                                        "name": "model",
+                                        "type": "text",
+                                        "label": "Model"
+                                    },
+                                    {
+                                        "name": "choices",
+                                        "spec": [
+                                            {
+                                                "name": "text",
+                                                "type": "text",
+                                                "label": "Text"
+                                            },
+                                            {
+                                                "name": "index",
+                                                "type": "number",
+                                                "label": "Index"
+                                            },
+                                            {
+                                                "name": "logprobs",
+                                                "type": "text",
+                                                "label": "Log Probs"
+                                            },
+                                            {
+                                                "name": "finish_reason",
+                                                "type": "text",
+                                                "label": "Finish Reason"
+                                            },
+                                            {
+                                                "name": "message",
+                                                "spec": [
+                                                    {
+                                                        "name": "role",
+                                                        "type": "text",
+                                                        "label": "Role"
+                                                    },
+                                                    {
+                                                        "name": "content",
+                                                        "type": "text",
+                                                        "label": "Content"
+                                                    },
+                                                    {
+                                                        "name": "refusal",
+                                                        "type": "text",
+                                                        "label": "Refusal"
+                                                    },
+                                                    {
+                                                        "name": "annotations",
+                                                        "spec": [
+                                                            {
+                                                                "name": "type",
+                                                                "type": "text",
+                                                                "label": "Type"
+                                                            },
+                                                            {
+                                                                "name": "url_citation",
+                                                                "spec": [
+                                                                    {
+                                                                        "name": "end_index",
+                                                                        "type": "number",
+                                                                        "label": "End Index"
+                                                                    },
+                                                                    {
+                                                                        "name": "start_index",
+                                                                        "type": "number",
+                                                                        "label": "Start Index"
+                                                                    },
+                                                                    {
+                                                                        "name": "title",
+                                                                        "type": "text",
+                                                                        "label": "Title"
+                                                                    },
+                                                                    {
+                                                                        "name": "url",
+                                                                        "type": "text",
+                                                                        "label": "URL"
+                                                                    }
+                                                                ],
+                                                                "type": "collection",
+                                                                "label": "URL Citation"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Annotations"
+                                                    }
+                                                ],
+                                                "type": "collection",
+                                                "label": "Message"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Choices"
+                                    },
+                                    {
+                                        "name": "usage",
+                                        "spec": [
+                                            {
+                                                "name": "prompt_tokens",
+                                                "type": "number",
+                                                "label": "Prompt Tokens"
+                                            },
+                                            {
+                                                "name": "completion_tokens",
+                                                "type": "text",
+                                                "label": "Completion Tokens"
+                                            },
+                                            {
+                                                "name": "total_tokens",
+                                                "type": "number",
+                                                "label": "Total Tokens"
+                                            },
+                                            {
+                                                "name": "prompt_tokens_details",
+                                                "spec": [
+                                                    {
+                                                        "name": "cached_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Cached Tokens"
+                                                    },
+                                                    {
+                                                        "name": "text_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Text Tokens"
+                                                    },
+                                                    {
+                                                        "name": "image_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Image Tokens"
+                                                    },
+                                                    {
+                                                        "name": "audio_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Audio Tokens"
+                                                    }
+                                                ],
+                                                "type": "collection",
+                                                "label": "Prompt Tokens Details"
+                                            },
+                                            {
+                                                "name": "completion_tokens_details",
+                                                "spec": [
+                                                    {
+                                                        "name": "reasoning_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Reasoning Tokens"
+                                                    },
+                                                    {
+                                                        "name": "text_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Text Tokens"
+                                                    },
+                                                    {
+                                                        "name": "audio_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Audio Tokens"
+                                                    },
+                                                    {
+                                                        "name": "accepted_prediction_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Accepted Prediction Tokens"
+                                                    },
+                                                    {
+                                                        "name": "rejected_prediction_tokens",
+                                                        "type": "uinteger",
+                                                        "label": "Rejected Prediction Tokens"
+                                                    }
+                                                ],
+                                                "type": "collection",
+                                                "label": "Completion Tokens Details"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Usage"
+                                    },
+                                    {
+                                        "name": "service_tier",
+                                        "type": "text",
+                                        "label": "Service Tier"
+                                    },
+                                    {
+                                        "name": "system_fingerprint",
+                                        "type": "text",
+                                        "label": "System Fingerprint"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 13,
+                            "module": "openai-gpt-3:transformTextToStructuredData",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 8400299
+                            },
+                            "mapper": {
+                                "model": "gpt-4o",
+                                "prompt": "Convert to Array",
+                                "rawText": "{{1.`5`}}",
+                                "parameters": [
+                                    {
+                                        "name": "Tool",
+                                        "type": "arrayString",
+                                        "isRequired": true,
+                                        "description": "Array of tools"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 900,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "model": {
+                                            "mode": "chose",
+                                            "label": "gpt-4o (system)"
+                                        },
+                                        "parameters": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "type": {
+                                                        "mode": "chose",
+                                                        "label": "Array (text)"
+                                                    },
+                                                    "isRequired": {
+                                                        "mode": "chose"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "objectDefinitions": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "openai-gpt-3"
+                                            },
+                                            "label": "My OpenAI connection"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:openai-gpt-3",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "model",
+                                        "type": "select",
+                                        "label": "Model",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "rawText",
+                                        "type": "text",
+                                        "label": "Text to Parse",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "prompt",
+                                        "type": "text",
+                                        "label": "Prompt",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "parameters",
+                                        "spec": {
+                                            "name": "value",
+                                            "spec": [],
+                                            "type": "collection",
+                                            "label": "Data Definition"
+                                        },
+                                        "type": "array",
+                                        "label": "Structured Data Definition",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "objectDefinitions",
+                                        "spec": {
+                                            "name": "value",
+                                            "spec": [
+                                                {
+                                                    "name": "name",
+                                                    "type": "text",
+                                                    "label": "Object Name",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "description",
+                                                    "type": "text",
+                                                    "label": "Description",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "properties",
+                                                    "spec": {
+                                                        "spec": [],
+                                                        "type": "collection",
+                                                        "label": "Property"
+                                                    },
+                                                    "type": "array",
+                                                    "label": "Properties",
+                                                    "labels": {
+                                                        "add": "Add property"
+                                                    },
+                                                    "required": true
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Object Definition"
+                                        },
+                                        "type": "array",
+                                        "label": "Object Definitions"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "Tool",
+                                        "spec": {
+                                            "type": "text"
+                                        },
+                                        "type": "array"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 7,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8512115
+                            },
+                            "mapper": {
+                                "base": "appv5VshPwK1jIVYi",
+                                "table": "tblsimDJXAZFiUpgU",
+                                "record": {
+                                    "fld3IKsP3jYoPJh98": "{{1.`2`}}",
+                                    "fld3zDteKjKJ8xleN": "{{1.`3`}}",
+                                    "fldET14P9SYy6PvIu": "{{13.Tool}}",
+                                    "fldce9RaDL0tq6xEL": "{{1.`7`}}",
+                                    "flddluJjmLYKRCS3x": "{{2.result}}",
+                                    "fldjPEg6xyQq7LxVh": "{{1.`4`}}",
+                                    "fldnuGPV03Su0F1pX": "{{1.`6`}}",
+                                    "fldrys5GWIn0vOaT8": "{{1.`1`}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "퍼스널 뉴스레터 AI 자동화"
+                                        },
+                                        "table": {
+                                            "label": "Table 1",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "fldrys5GWIn0vOaT8",
+                                                            "type": "text",
+                                                            "label": "이름"
+                                                        },
+                                                        {
+                                                            "name": "fld3IKsP3jYoPJh98",
+                                                            "type": "text",
+                                                            "label": "이메일"
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fld3zDteKjKJ8xleN",
+                                                            "type": "select",
+                                                            "label": "직업",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "마케터",
+                                                                    "value": "마케터"
+                                                                },
+                                                                {
+                                                                    "label": "개발자",
+                                                                    "value": "개발자"
+                                                                },
+                                                                {
+                                                                    "label": "디자이너",
+                                                                    "value": "디자이너"
+                                                                },
+                                                                {
+                                                                    "label": "스타트업",
+                                                                    "value": "스타트업"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldjPEg6xyQq7LxVh",
+                                                            "type": "select",
+                                                            "label": "자동화 레벨",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "초보자",
+                                                                    "value": "초보자"
+                                                                },
+                                                                {
+                                                                    "label": "숙련자",
+                                                                    "value": "숙련자"
+                                                                },
+                                                                {
+                                                                    "label": "고수",
+                                                                    "value": "고수"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "name": "fldET14P9SYy6PvIu",
+                                                            "spec": {
+                                                                "mode": "edit",
+                                                                "type": "select",
+                                                                "label": "Value",
+                                                                "dynamic": true,
+                                                                "options": [
+                                                                    {
+                                                                        "label": "Make",
+                                                                        "value": "Make"
+                                                                    },
+                                                                    {
+                                                                        "label": "n8n",
+                                                                        "value": "n8n"
+                                                                    },
+                                                                    {
+                                                                        "label": "Airtable",
+                                                                        "value": "Airtable"
+                                                                    },
+                                                                    {
+                                                                        "label": "ChatGPT",
+                                                                        "value": "ChatGPT"
+                                                                    },
+                                                                    {
+                                                                        "label": "Cursor",
+                                                                        "value": "Cursor"
+                                                                    }
+                                                                ],
+                                                                "validate": false
+                                                            },
+                                                            "type": "array",
+                                                            "label": "관심있는도구"
+                                                        },
+                                                        {
+                                                            "name": "fldnuGPV03Su0F1pX",
+                                                            "type": "text",
+                                                            "label": "자동화하고 싶은 작업",
+                                                            "multiline": true
+                                                        },
+                                                        {
+                                                            "name": "fldce9RaDL0tq6xEL",
+                                                            "type": "text",
+                                                            "label": "지금 가장 궁금한 점",
+                                                            "multiline": true
+                                                        },
+                                                        {
+                                                            "name": "flddluJjmLYKRCS3x",
+                                                            "type": "text",
+                                                            "label": "GPT 응답",
+                                                            "multiline": true
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldgSiAWytwbrqV6E",
+                                                            "type": "select",
+                                                            "label": "상태",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "신규",
+                                                                    "value": "신규"
+                                                                },
+                                                                {
+                                                                    "label": "응답 완료",
+                                                                    "value": "응답 완료"
+                                                                },
+                                                                {
+                                                                    "label": "보류중",
+                                                                    "value": "보류중"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "fld3zDteKjKJ8xleN": {
+                                                    "mode": "edit"
+                                                },
+                                                "fldET14P9SYy6PvIu": {
+                                                    "mode": "edit"
+                                                },
+                                                "fldgSiAWytwbrqV6E": {
+                                                    "mode": "edit"
+                                                },
+                                                "fldjPEg6xyQq7LxVh": {
+                                                    "mode": "edit"
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "My Airtable OAuth connection"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "fldrys5GWIn0vOaT8",
+                                                "type": "text",
+                                                "label": "이름"
+                                            },
+                                            {
+                                                "name": "fld3IKsP3jYoPJh98",
+                                                "type": "text",
+                                                "label": "이메일"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fld3zDteKjKJ8xleN",
+                                                "type": "select",
+                                                "label": "직업"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldjPEg6xyQq7LxVh",
+                                                "type": "select",
+                                                "label": "자동화 레벨"
+                                            },
+                                            {
+                                                "name": "fldET14P9SYy6PvIu",
+                                                "spec": {
+                                                    "mode": "edit",
+                                                    "name": "value",
+                                                    "type": "select",
+                                                    "label": "Value",
+                                                    "dynamic": true,
+                                                    "options": [
+                                                        {
+                                                            "label": "Make",
+                                                            "value": "Make"
+                                                        },
+                                                        {
+                                                            "label": "n8n",
+                                                            "value": "n8n"
+                                                        },
+                                                        {
+                                                            "label": "Airtable",
+                                                            "value": "Airtable"
+                                                        },
+                                                        {
+                                                            "label": "ChatGPT",
+                                                            "value": "ChatGPT"
+                                                        },
+                                                        {
+                                                            "label": "Cursor",
+                                                            "value": "Cursor"
+                                                        }
+                                                    ],
+                                                    "validate": false
+                                                },
+                                                "type": "array",
+                                                "label": "관심있는도구"
+                                            },
+                                            {
+                                                "name": "fldnuGPV03Su0F1pX",
+                                                "type": "text",
+                                                "label": "자동화하고 싶은 작업"
+                                            },
+                                            {
+                                                "name": "fldce9RaDL0tq6xEL",
+                                                "type": "text",
+                                                "label": "지금 가장 궁금한 점"
+                                            },
+                                            {
+                                                "name": "flddluJjmLYKRCS3x",
+                                                "type": "text",
+                                                "label": "GPT 응답"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldgSiAWytwbrqV6E",
+                                                "type": "select",
+                                                "label": "상태"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "이름",
+                                        "type": "text",
+                                        "label": "이름"
+                                    },
+                                    {
+                                        "name": "이메일",
+                                        "type": "text",
+                                        "label": "이메일"
+                                    },
+                                    {
+                                        "name": "직업",
+                                        "type": "text",
+                                        "label": "직업"
+                                    },
+                                    {
+                                        "name": "자동화 레벨",
+                                        "type": "text",
+                                        "label": "자동화 레벨"
+                                    },
+                                    {
+                                        "name": "관심있는도구",
+                                        "type": "array",
+                                        "label": "관심있는도구",
+                                        "dynamic": true,
+                                        "editable": true
+                                    },
+                                    {
+                                        "name": "자동화하고 싶은 작업",
+                                        "type": "text",
+                                        "label": "자동화하고 싶은 작업",
+                                        "multiline": true
+                                    },
+                                    {
+                                        "name": "지금 가장 궁금한 점",
+                                        "type": "text",
+                                        "label": "지금 가장 궁금한 점",
+                                        "multiline": true
+                                    },
+                                    {
+                                        "name": "GPT 응답",
+                                        "type": "text",
+                                        "label": "GPT 응답",
+                                        "multiline": true
+                                    },
+                                    {
+                                        "name": "상태",
+                                        "type": "text",
+                                        "label": "상태"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 14,
+                            "module": "google-email:ActionSendEmail",
+                            "version": 2,
+                            "parameters": {
+                                "account": 8517542
+                            },
+                            "mapper": {
+                                "from": "",
+                                "to": [
+                                    "{{7.`이메일`}}"
+                                ],
+                                "subject": "안녕하세요 {{7.`이름`}}님! AI 자동화 정보를 드립니다",
+                                "html": "{{7.`GPT 응답`}}",
+                                "attachments": [],
+                                "cc": [],
+                                "bcc": []
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "account": {
+                                            "label": "My Google Restricted connection",
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "google-restricted"
+                                            }
+                                        }
+                                    },
+                                    "expect": {
+                                        "to": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "attachments": {
+                                            "mode": "chose"
+                                        },
+                                        "cc": {
+                                            "mode": "chose"
+                                        },
+                                        "bcc": {
+                                            "mode": "chose"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "account",
+                                        "type": "account:google-restricted",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "from",
+                                        "type": "text",
+                                        "label": "From"
+                                    },
+                                    {
+                                        "name": "to",
+                                        "type": "array",
+                                        "label": "To",
+                                        "required": true,
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "email",
+                                            "label": "Email address",
+                                            "required": true
+                                        }
+                                    },
+                                    {
+                                        "name": "subject",
+                                        "type": "text",
+                                        "label": "Subject"
+                                    },
+                                    {
+                                        "name": "html",
+                                        "type": "text",
+                                        "label": "Content"
+                                    },
+                                    {
+                                        "name": "attachments",
+                                        "type": "array",
+                                        "label": "Attachments",
+                                        "spec": [
+                                            {
+                                                "name": "fileName",
+                                                "label": "File name",
+                                                "type": "filename",
+                                                "required": true,
+                                                "semantic": "file:name"
+                                            },
+                                            {
+                                                "name": "data",
+                                                "label": "Data",
+                                                "type": "buffer",
+                                                "required": true,
+                                                "semantic": "file:data"
+                                            },
+                                            {
+                                                "name": "cid",
+                                                "label": "Content-ID",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "cc",
+                                        "type": "array",
+                                        "label": "Copy recipient",
+                                        "spec": {
+                                            "type": "email",
+                                            "label": "Email address",
+                                            "name": "value"
+                                        }
+                                    },
+                                    {
+                                        "name": "bcc",
+                                        "type": "array",
+                                        "label": "Blind copy recipient",
+                                        "spec": {
+                                            "type": "email",
+                                            "label": "Email address",
+                                            "name": "value"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "eu2.make.com",
+        "notes": []
+    }
+}
