@@ -42,6 +42,12 @@ AI와 머신러닝을 위한 벡터 데이터베이스 서비스입니다.
 ### → [Apify (API 자동화)](https://www.apify.com/?fpr=4amiy)
 웹 스크래핑과 데이터 추출을 위한 플랫폼입니다.
 
+### → [Shotstack (콘텐츠 자동화)](https://shotstack.io/?via=successwiki)
+AI 기반 비디오 편집 API와 프로그래밍 방식 영상 제작 도구입니다.
+
+### → [piapi (콘텐츠 자동화 사진 영상 제작 API)](https://piapi.ai/workspace?via=start-today)
+사진과 영상을 자동으로 생성할 수 있는 콘텐츠 자동화 API 서비스입니다.
+
 ### → [Elevenlabs (보이스 에이전트)](https://try.elevenlabs.io/start-today)
 고품질 AI 음성 생성 및 음성 복제 서비스입니다.
 
