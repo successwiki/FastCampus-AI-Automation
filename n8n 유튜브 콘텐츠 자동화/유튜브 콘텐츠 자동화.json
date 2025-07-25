@@ -1,0 +1,849 @@
+{
+  "name": "유튜브 콘텐츠 자동화",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        0
+      ],
+      "id": "9e28cdbe-f65c-4b1c-8104-79d8048f44e5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appriKqxMxnDi7sFt",
+          "mode": "list",
+          "cachedResultName": "유튜브 콘텐츠 자동화",
+          "cachedResultUrl": "https://airtable.com/appriKqxMxnDi7sFt"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblG1884FP3yhmzJI",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appriKqxMxnDi7sFt/tblG1884FP3yhmzJI"
+        },
+        "filterByFormula": "{자동화} = '자동화 시작'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        0
+      ],
+      "id": "f136de1b-0d4e-4742-bb6b-41239abab640",
+      "name": "Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        240
+      ],
+      "id": "d465a0be-4822-47e7-bff9-f5e324946393",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "numberOfItems": 4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserItemList",
+      "typeVersion": 1,
+      "position": [
+        740,
+        220
+      ],
+      "id": "26850112-61b5-42aa-acca-832bf2565d60",
+      "name": "Item List Output Parser"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=# POV 아이디어 → 이미지 프롬프트 확장기\n\n이 프롬프트는 간단한 POV 아이디어와 배경 설명를 받아, 이미지 생성 AI 모델(MidJourney, Flux 등)에서 사용할 수 있는 고퀄리티 시네마틱 묘사로 확장합니다.  \n결과는 1인칭 시점으로 구성된 한 문장의 프롬프트이며, 손이나 발 등 신체가 전경에 반드시 등장해야 하며 배경은 감각적으로 풍부하게 묘사합니다.\n\n입력 프롬프트:  {{ $json.text }} \n배경 설명: {{ $('Airtable').item.json[\"배경 설명\"] }}\n\n## 출력 언어\n\n결과 프롬프트 문장은 반드시 영어로 출력합니다.  \n예: First person view POV GoPro shot of my hands pulling up on a metal ladder...\n\n## 프롬프트 구성 규칙\n\n1. 전경 (Foreground)  \n\"First person view POV GoPro shot of...\"로 시작  \n손이나 발이 구체적인 행동을 하는 묘사 포함 (예: gripping, lifting, brushing 등)\n\n2. 배경 (Background)  \n\"In the background, ...\" 으로 연결  \n환경 정보 기반으로 감각적, 시각적 묘사를 추가 (예: foggy, neon lights, old books, wind, noise 등)\n\n## 작성 지침\n\n프롬프트는 반드시 한 문장으로 작성  \n1000자 이내 유지  \n1인칭 몰입감을 극대화할 것  \n설명, 명령어, 마크다운 등은 포함하지 않음\n\n## Example Output\n\nFirst person view POV GoPro shot of my gloved hands gripping a rusted ladder, rain dripping from every rung, in the background, flickering neon signs reflect off wet alley walls as sirens echo through the empty night\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1180,
+        -300
+      ],
+      "id": "6730fc4b-d9ef-490a-a249-6e2ab5ba8a33",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1260,
+        -100
+      ],
+      "id": "7ae02846-d921-41c9-93af-99bfe6e2d949",
+      "name": "Wait",
+      "webhookId": "3a1ace07-e129-4a45-95a3-2c1d508adddb"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1260,
+        100
+      ],
+      "id": "c72b2583-6ae9-477c-b4eb-f21085b822d5",
+      "name": "Wait1",
+      "webhookId": "3a1ace07-e129-4a45-95a3-2c1d508adddb"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 4,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1820,
+        -20
+      ],
+      "id": "e99eb006-cddc-4ad1-a9a0-07fa339c8174",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.piapi.ai/api/v1/task/{{ $json.data.task_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1480,
+        -100
+      ],
+      "id": "25fdf93e-a01b-4a2f-a657-373aeba50138",
+      "name": "Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"model\": \"Qubico/flux1-dev\",\n  \"task_type\": \"txt2img\",\n  \"input\": {\n    \"prompt\": \"{{ $json.message.content }}\",\n    \"width\": 540,\n    \"height\": 960\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        -100
+      ],
+      "id": "a2f0f151-91c3-4406-a9ae-eca240328dcc",
+      "name": "Text-to-Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.piapi.ai/api/v1/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "=application/json",
+        "body": "={\n  \"model\": \"kling\",\n  \"mode\": \"std\",\n  \"task_type\": \"video_generation\",\n  \"input\": {\n    \"prompt\": \"{{ $json.data.input.prompt }}\",\n    \"negative_prompt\": \"bad quality\",\n    \"cfg_scale\": 0.65,\n    \"duration\": 5,\n    \"image_url\": \"{{ $json.data.output.image_url }}\",\n    \"camera_control\": {\n      \"type\": \"simple\",\n      \"config\": {\n        \"horizontal\": 0,\n        \"vertical\": 0,\n        \"pan\": 0,\n        \"tilt\": 0,\n        \"roll\": 0,\n        \"zoom\": 0\n      }\n    }\n  },\n  \"config\": {}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        100
+      ],
+      "id": "9ac72c7b-9f01-4b35-bc4f-31dfe85fd274",
+      "name": "Image-to-Video"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/sound-generation",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"text\": \"no voice {{ $('OpenAI').item.json.message.content }}\",\n  \"duration_seconds\": 5,\n  \"prompt_influence\": 0.6\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        300
+      ],
+      "id": "4fa8e5e1-9adf-4471-87c8-5447779ff3b5",
+      "name": "Text-to-Sound"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.piapi.ai/api/v1/task/{{ $json.data.task_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1480,
+        100
+      ],
+      "id": "da737416-4d0b-4c17-8863-ad68901c232d",
+      "name": "Video"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.data.task_id }}.mp3",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "125LJg48W6kg6uRiGgcRFG08uhAXEpGxd",
+          "mode": "list",
+          "cachedResultName": "콘텐츠 자동화",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/125LJg48W6kg6uRiGgcRFG08uhAXEpGxd"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1260,
+        300
+      ],
+      "id": "9a0f7bc3-4cc9-4bb5-b06d-d998354762d5",
+      "name": "Upload Sound",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "qaG4jHLQH1l3D0qX",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "writer",
+            "type": "anyone",
+            "allowFileDiscovery": true
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1480,
+        300
+      ],
+      "id": "cba2fa4f-9b76-4747-a3f4-bebd9cb50c67",
+      "name": "Access",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "qaG4jHLQH1l3D0qX",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const scene_titles = items.map(item => item.json.text ?? null);\nconst video_urls   = items.map(item => item.json.data?.output?.video_url ?? null);\nconst sound_urls   = items.map(item => item.json.webContentLink ?? null);\n\nreturn [\n  {\n    json: {\n      scene_titles,\n      video_urls,\n      sound_urls\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2020,
+        0
+      ],
+      "id": "5b8951c3-30d6-4e9b-8394-42d49e112f41",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json[\"아이디어\"] }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "# 하루 시퀀스 액션 프롬프트 생성기  하나의 인물 혹은 세계관을 기반으로, 하루 동안 벌어질 수 있는 1인칭 동작 시퀀스를 생성합니다.   각 문장은 짧고 직접적이며, 물리적인 행동과 주변 상호작용 중심으로 구성해야 합니다.   예: 중세 농부의 하루, 사이버펑크 용병의 루틴 등  ## 출력 언어  모든 시퀀스 문장은 영어로 출력합니다   예: Scooping water from a village well   설명이나 지침은 한국어로 제공되지만, 결과물은 반드시 영어로 생성해야 합니다  ## 작성 규칙  각 문장은 5~10단어 이내 각 문장이 하나의 아이템   \"POV:\" 같은 표기 없이 1인칭 전제로 작성   내면 묘사, 감정 표현 없이 물리적 행동만 묘사   하루의 흐름이 자연스럽게 이어지도록 작성   중복 동작 없이 매 시퀀스는 고유해야 함  ## Example Output (each is example)  Theme: A Peasant’s Day in Medieval Europe Pushing open a wooden cottage door   Scooping water from a village well   Kneeling to tie worn leather shoes   Walking through a bustling market square   Handing a silver coin to a merchant   Carrying a sack of wheat up a hill   Hammering nails into a wooden fence   Stirring stew over a crackling fire   Placing a candle by the bedside  or  Theme: A Cyberpunk Mercenary’s Routine Sliding aside tangled wires on a cluttered desk   Scanning a wrist implant for mission updates   Loading a plasma pistol in a dim alley   Leaping onto a hover bike in the rain   Swiping a keycard through a vault scanner   Ducking behind cover as drones pass overhead   Hacking a neon-lit terminal with gloved fingers   Collapsing onto a metal cot in exhaustion"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        560,
+        0
+      ],
+      "id": "07182671-fde4-4a94-909f-3a6be4eea7b9",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appriKqxMxnDi7sFt",
+          "mode": "list",
+          "cachedResultName": "유튜브 콘텐츠 자동화",
+          "cachedResultUrl": "https://airtable.com/appriKqxMxnDi7sFt"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblG1884FP3yhmzJI",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appriKqxMxnDi7sFt/tblG1884FP3yhmzJI"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Airtable').all()[0].json.id }}",
+            "영상 링크": "={{ $json.response.url }}",
+            "자동화": "자동화 완료"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "아이디어",
+              "displayName": "아이디어",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "자막",
+              "displayName": "자막",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "배경 설명",
+              "displayName": "배경 설명",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "자동화",
+              "displayName": "자동화",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "자동화 대기",
+                  "value": "자동화 대기"
+                },
+                {
+                  "name": "자동화 시작",
+                  "value": "자동화 시작"
+                },
+                {
+                  "name": "자동화 완료",
+                  "value": "자동화 완료"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "영상 링크",
+              "displayName": "영상 링크",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2920,
+        0
+      ],
+      "id": "d8757f98-0d8a-4338-8dd5-6f0dd1cb5f65",
+      "name": "Airtable1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.shotstack.io/stage/templates/render",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"id\": \"3ec842f3-e8c6-4999-9e98-83938e0d5102\",\n  \"merge\": [\n    {\n      \"find\": \"VIDEO_1\",\n      \"replace\": \"{{ $json.video_urls[0] }}\"\n    },\n    {\n      \"find\": \"VIDEO_2\",\n      \"replace\": \"{{ $json.video_urls[1] }}\"\n    },\n    {\n      \"find\": \"VIDEO_3\",\n      \"replace\": \"{{ $json.video_urls[2] }}\"\n    },\n    {\n      \"find\": \"VIDEO_4\",\n      \"replace\": \"{{ $json.video_urls[3] }}\"\n    },\n    {\n      \"find\": \"TEXT_1\",\n      \"replace\": \"{{ $json.scene_titles[0] }}\"\n    },\n    {\n      \"find\": \"TEXT_2\",\n      \"replace\": \"{{ $json.scene_titles[1] }}\"\n    },\n    {\n      \"find\": \"TEXT_3\",\n      \"replace\": \"{{ $json.scene_titles[2] }}\"\n    },\n    {\n      \"find\": \"TEXT_4\",\n      \"replace\": \"{{ $json.scene_titles[3] }}\"\n    },\n    {\n      \"find\": \"AUDIO_1\",\n      \"replace\": \"{{ $json.sound_urls[0] }}\"\n    },\n    {\n      \"find\": \"AUDIO_2\",\n      \"replace\": \"{{ $json.sound_urls[1] }}\"\n    },\n    {\n      \"find\": \"AUDIO_3\",\n      \"replace\": \"{{ $json.sound_urls[2] }}\"\n    },\n    {\n      \"find\": \"AUDIO_4\",\n      \"replace\": \"{{ $json.sound_urls[3] }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        0
+      ],
+      "id": "9c68f955-dc00-4889-9abc-9e3c9969d83c",
+      "name": "HTTP Request",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "=https://api.shotstack.io/edit/stage/render/{{ $json.response.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2680,
+        0
+      ],
+      "id": "506dbc03-7277-4f9e-aee1-3c6c9b7eb143",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2460,
+        0
+      ],
+      "id": "c89ec49f-32db-4fcf-a0ba-83630f12dd43",
+      "name": "Wait2",
+      "webhookId": "49140356-1975-402d-aba2-504de9765444"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Item List Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Text-to-Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image": {
+      "main": [
+        [
+          {
+            "node": "Image-to-Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text-to-Image": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image-to-Video": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text-to-Sound": {
+      "main": [
+        [
+          {
+            "node": "Upload Sound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video": {
+      "main": [
+        [
+          {
+            "node": "Text-to-Sound",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Upload Sound": {
+      "main": [
+        [
+          {
+            "node": "Access",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Access": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Airtable1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eb4ec87f-c3ea-4d9c-888e-76858a046203",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6584c3ee4a1bba8a530380aa4465cf16feecea86d0c373cc0dd44d8c1497f81e"
+  },
+  "id": "yEzUT1ANbi3xsH2j",
+  "tags": []
+}

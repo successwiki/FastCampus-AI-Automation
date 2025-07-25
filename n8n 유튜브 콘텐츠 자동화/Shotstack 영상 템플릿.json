@@ -1,0 +1,270 @@
+{
+  "timeline": {
+    "background": "#FFFFFF",
+    "tracks": [
+      {
+        "clips": [
+          {
+            "length": 5,
+            "asset": {
+              "type": "audio",
+              "src": "{{ AUDIO_1 }}",
+              "volume": 0.15
+            },
+            "start": 0
+          },
+          {
+            "length": 5,
+            "asset": {
+              "type": "audio",
+              "src": "{{ AUDIO_2 }}",
+              "volume": 0.15
+            },
+            "start": 5
+          },
+          {
+            "length": 5,
+            "asset": {
+              "type": "audio",
+              "src": "{{ AUDIO_3 }}",
+              "volume": 0.15
+            },
+            "start": 10
+          },
+          {
+            "length": 5,
+            "asset": {
+              "type": "audio",
+              "src": "{{ AUDIO_4 }}",
+              "volume": 0.15
+            },
+            "start": 15
+          }
+        ]
+      },
+      {
+        "clips": [
+          {
+            "asset": {
+              "type": "text",
+              "text": "{{TEXT_1}}",
+              "alignment": {
+                "horizontal": "center",
+                "vertical": "center"
+              },
+              "font": {
+                "color": "#ffffff",
+                "family": "Montserrat ExtraBold",
+                "size": "100",
+                "lineHeight": 1,
+                "opacity": 1
+              },
+              "width": 626,
+              "height": 72,
+              "stroke": {
+                "width": 0
+              }
+            },
+            "start": 0,
+            "length": 5,
+            "offset": {
+              "x": 0,
+              "y": 0.23
+            },
+            "position": "center"
+          },
+          {
+            "asset": {
+              "type": "text",
+              "text": "{{TEXT_2}}",
+              "alignment": {
+                "horizontal": "center",
+                "vertical": "center"
+              },
+              "font": {
+                "color": "#ffffff",
+                "family": "Montserrat ExtraBold",
+                "size": "100",
+                "lineHeight": 1,
+                "opacity": 1
+              },
+              "width": 626,
+              "height": 72,
+              "stroke": {
+                "width": 0
+              }
+            },
+            "start": 5,
+            "length": 5,
+            "offset": {
+              "x": 0,
+              "y": 0.23
+            },
+            "position": "center"
+          },
+          {
+            "asset": {
+              "type": "text",
+              "text": "{{TEXT_3}}",
+              "alignment": {
+                "horizontal": "center",
+                "vertical": "center"
+              },
+              "font": {
+                "color": "#ffffff",
+                "family": "Montserrat ExtraBold",
+                "size": "40",
+                "lineHeight": 1,
+                "opacity": 1
+              },
+              "width": 626,
+              "height": 72,
+              "stroke": {
+                "width": 0
+              }
+            },
+            "start": 10,
+            "length": 5,
+            "offset": {
+              "x": 0,
+              "y": 0.23
+            },
+            "position": "center"
+          },
+          {
+            "asset": {
+              "type": "text",
+              "text": "{{TEXT_4}}",
+              "alignment": {
+                "horizontal": "center",
+                "vertical": "center"
+              },
+              "font": {
+                "color": "#ffffff",
+                "family": "Montserrat ExtraBold",
+                "size": "100",
+                "lineHeight": 1,
+                "opacity": 1
+              },
+              "width": 626,
+              "height": 72,
+              "stroke": {
+                "width": 0
+              }
+            },
+            "start": 15,
+            "length": 5,
+            "offset": {
+              "x": 0,
+              "y": 0.23
+            },
+            "position": "center"
+          }
+        ]
+      },
+      {
+        "clips": [
+          {
+            "length": 5,
+            "asset": {
+              "type": "video",
+              "src": "{{ VIDEO_1 }}",
+              "volume": 1
+            },
+            "start": 0
+          },
+          {
+            "length": 5,
+            "asset": {
+              "type": "video",
+              "src": "{{ VIDEO_2 }}",
+              "volume": 1
+            },
+            "start": 5
+          },
+          {
+            "length": 5,
+            "asset": {
+              "type": "video",
+              "src": "{{ VIDEO_3 }}",
+              "volume": 1
+            },
+            "start": 10
+          },
+          {
+            "length": 5,
+            "asset": {
+              "type": "video",
+              "src": "{{ VIDEO_4 }}",
+              "volume": 1
+            },
+            "start": 15
+          }
+        ]
+      }
+    ]
+  },
+  "output": {
+    "format": "mp4",
+    "fps": 25,
+    "scaleTo": "1080",
+    "size": {
+      "width": 1080,
+      "height": 1920
+    }
+  },
+  "merge": [
+    {
+      "find": "VIDEO_1",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-8e8d7-84pk8-jj46z-ay2c3v/source.mp4"
+    },
+    {
+      "find": "VIDEO_2",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-8e8d7-84pk8-jj46z-ay2c3v/source.mp4"
+    },
+    {
+      "find": "VIDEO_3",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-8e8d7-84pk8-jj46z-ay2c3v/source.mp4"
+    },
+    {
+      "find": "VIDEO_4",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-8e8d7-84pk8-jj46z-ay2c3v/source.mp4"
+    },
+    {
+      "find": "Text_1",
+      "replace": "This is Text 1"
+    },
+    {
+      "find": "Text_2",
+      "replace": "This is Text 2"
+    },
+    {
+      "find": "Text_3",
+      "replace": "This is Text 3"
+    },
+    {
+      "find": "Text_4",
+      "replace": "This is Text 4"
+    },
+    {
+      "find": "AUDIO_1",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-9y7ef-qjw6n-238qt-1m6rew/source.mp3"
+    },
+    {
+      "find": "AUDIO_2",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-9y7ef-qjw6n-238qt-1m6rew/source.mp3"
+    },
+    {
+      "find": "AUDIO_3",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-9y7ef-qjw6n-238qt-1m6rew/source.mp3"
+    },
+    {
+      "find": "AUDIO_4",
+      "replace": "https://shotstack-ingest-api-v1-sources.s3.ap-southeast-2.amazonaws.com/0jf5tg7j6j/zzz01jsz-9y7ef-qjw6n-238qt-1m6rew/source.mp3"
+    },
+    {
+      "find": "Text_5",
+      "replace": "This is Text 5"
+    }
+  ]
+} 

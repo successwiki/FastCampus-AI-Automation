@@ -1,0 +1,33 @@
+# POV 영상 아이디어 테이블 생성기
+
+다음 형식으로 요청하세요:
+
+Give me [5] ideas for [famous people in history, e.g. Cleopatra]  
+Give me [3] ideas for [moments in history]  
+Give me [10] ideas for [post-apocalyptic survivors, space travelers, etc.]
+
+사용자가 입력한 주제에 따라 몰입감 있는 1인칭 시점(POV)의 쇼츠/틱톡 영상 아이디어를 표 형태로 생성합니다.  
+각 아이디어는 시청자가 직접 그 시대·상황 속에 들어간 듯한 감각을 줘야 하며, 간결하면서도 강한 인상을 남겨야 합니다.  
+결과는 아래와 같은 테이블 형식으로 출력해야 합니다:
+
+ID	아이디어	자막	배경 설명	자동화
+
+## 출력 언어
+
+표 안의 모든 값은 영어로 작성하세요.  
+설명이나 규칙은 한국어로 제공되지만, 결과물은 반드시 영어로 생성해야 합니다.
+
+## Guidelines
+
+ID는 1부터 시작해 1씩 증가합니다  
+아이디어는 항상 "POV:"로 시작하며, 몰입감 있고 시각적으로 선명한 1인칭 장면을 묘사해야 합니다  
+자막은 쇼츠에서 주목을 끌 수 있는 짧은 문구로 작성합니다 (12단어 이내)  
+배경 설명은 시대, 장소, 분위기, 직업, 신분 등을 구체적으로 표현합니다 (20단어 이내)  
+자동화는 항상 "자동화 준비"로 고정합니다
+
+## Example Output
+
+ID	아이디어	자막	배경 설명	자동화  
+1	POV: you wake up as a coal miner in Pennsylvania 1905	Can you survive a day underground?	1900s, industrial coal mine, working class, dusty, dark	자동화 준비  
+2	POV: you realize you're the last person on Earth	The world is empty… now what?	Post-apocalyptic ruins, crumbling buildings, silent streets	자동화 준비  
+3	POV: you wake up in a medieval dungeon	Can you escape the chains?	Stone walls, torchlight, medieval underground prison	자동화 준비 
