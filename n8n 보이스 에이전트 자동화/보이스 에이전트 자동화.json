@@ -1,0 +1,1758 @@
+{
+  "name": "AI 보이스 에이전트",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "74331962-b9b0-49ed-b5d0-882927ede6ea",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        100
+      ],
+      "id": "85aa1a93-f2e7-4dba-acd7-f6a8fd138e53",
+      "name": "Webhook",
+      "webhookId": "74331962-b9b0-49ed-b5d0-882927ede6ea"
+    },
+    {
+      "parameters": {
+        "jsCode": "const toolType = $json.body.tool_type;\n\nconst output = {\n  tool_type: toolType,\n  timestamp: new Date().toISOString() // 2025-07-23T04:57:00Z (EDT)\n};\n\nif (toolType === 'verify_customer') {\n  output.name = $json.body.name;\n  output.phone_last4 = $json.body.phone_last4;\n} else if (toolType === 'ai_recommendation') {\n  output.customer_id = $json.body.customer_id;\n  output.request_type = $json.body.request_type;\n  output.purpose = $json.body.purpose;\n  output.budget_range = $json.body.budget_range;\n  output.preferences = $json.body.preferences;\n} else if (toolType === 'start_complaint_resolution') {\n  output.customer_id = $json.body.customer_id;\n  output.order_number = $json.body.order_number;\n  output.complaint_type = $json.body.complaint_type;\n  output.initial_emotion = $json.body.initial_emotion;\n  if ($json.body.severity) output.severity = $json.body.severity;\n  if ($json.body.actions_taken) output.actions_taken = $json.body.actions_taken;\n} else if (toolType === 'complete_complaint_resolution') {\n  output.resolution_id = $json.body.resolution_id;\n  output.final_emotion = $json.body.final_emotion;\n  output.customer_satisfied = $json.body.customer_satisfied;\n  if ($json.body.order_number) output.order_number = $json.body.order_number;\n} else {\n  throw new Error(\"Invalid tool_type: \" + toolType);\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        100
+      ],
+      "id": "8534fa07-c299-4d3e-81ad-b9b9f86320ea",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.tool_type }}",
+                    "rightValue": "verify_customer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1d27ce2c-d303-4fbc-9e8b-4058e6ab4b9f"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "77e700ad-7cf4-4f40-bed9-523b96cb0972",
+                    "leftValue": "={{ $json.tool_type }}",
+                    "rightValue": "ai_recommendation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "da4c692b-0819-4929-a1ea-f7941b80f80c",
+                    "leftValue": "={{ $json.tool_type }}",
+                    "rightValue": "start_complaint_resolution",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9840bd48-6e3b-41c6-b628-e0db24d97007",
+                    "leftValue": "={{ $json.tool_type }}",
+                    "rightValue": "complete_complaint_resolution",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -40,
+        80
+      ],
+      "id": "236b731b-66d3-4d62-986c-b5954dbed6a8",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        -440
+      ],
+      "id": "f8c14988-e284-4e22-b35d-de66010df894",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbldmS9lLGILaF200",
+          "mode": "list",
+          "cachedResultName": "Customers",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbldmS9lLGILaF200"
+        },
+        "filterByFormula": "=AND(Name='{{ $('Switch').item.json.name }}',RIGHT(Phone, 4)='{{ $('Switch').item.json.phone_last4 }}')",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        680,
+        -440
+      ],
+      "id": "0601ff19-e4cd-47e0-82a0-e38e9e68f6fc",
+      "name": "Airtable1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"customer_id\": {\n      \"type\": \"string\"\n    },\n    \"verified\": {\n      \"type\": \"boolean\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"customer_id\",\n    \"verified\",\n    \"message\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        840,
+        -440
+      ],
+      "id": "26773180-67ec-40d3-9d2f-a1ec98b69bdd",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        340,
+        80
+      ],
+      "id": "f5aea6fd-2fdf-4a6f-a95f-73e86c1a4965",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"recommendations\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"product_sku\": {\n            \"type\": \"string\"\n          },\n          \"product_name\": {\n            \"type\": \"string\"\n          },\n          \"price\": {\n            \"type\": \"number\"\n          },\n          \"description\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"product_sku\",\n          \"product_name\",\n          \"price\",\n          \"description\"\n        ]\n      }\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"recommendations\",\n    \"message\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        980,
+        80
+      ],
+      "id": "674cbc0d-0d22-438b-a29b-ba1b13f1d763",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        540
+      ],
+      "id": "43163dcc-023e-4a72-9932-c65a13db1581",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"resolution_id\": {\n      \"type\": \"string\"\n    },\n    \"actions_taken\": {\n      \"type\": \"string\"\n    },\n    \"compensation\": {\n      \"type\": \"number\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"resolution_id\",\n    \"actions_taken\",\n    \"compensation\",\n    \"message\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        540
+      ],
+      "id": "a2f83dbe-658a-46e9-aa5b-b71f9f08904b",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        460,
+        1000
+      ],
+      "id": "f982e3ce-9a11-4bcf-a177-d6963baf8070",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "phDiFxsNESUJFJ42",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    },\n    \"order_number\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"message\",\n    \"order_number\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        900,
+        1000
+      ],
+      "id": "444827ee-dbb2-47d6-83ed-a68946f1fe01",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbldmS9lLGILaF200",
+          "mode": "list",
+          "cachedResultName": "Customers",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbldmS9lLGILaF200"
+        },
+        "filterByFormula": "={ID}='{{ $('Code').item.json.customer_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        460,
+        80
+      ],
+      "id": "d2a05e59-ed78-488e-b09b-fad0a2e3d23b",
+      "name": "Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblifsTAzQwHmDp7N",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tblifsTAzQwHmDp7N"
+        },
+        "filterByFormula": "=",
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "Order Date",
+              "direction": "desc"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        580,
+        80
+      ],
+      "id": "bb23c361-b3b9-45cf-9a39-552c4baacbdd",
+      "name": "Airtable2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblkjzpHwo3DcLJ8D",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tblkjzpHwo3DcLJ8D"
+        },
+        "filterByFormula": "=",
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "Price"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        700,
+        80
+      ],
+      "id": "5745e412-d9b2-4b1c-8aeb-581c1df209e8",
+      "name": "Airtable3",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl8PCYmWhEsPyFfy",
+          "mode": "list",
+          "cachedResultName": "AI_Recommendations",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbl8PCYmWhEsPyFfy"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Recommendation ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Recommendation_ID', ``, 'string') }}",
+            "Customer": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer', ``, 'string') }}",
+            "Request": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Request', ``, 'string') }}",
+            "ChatGPT Analysis": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ChatGPT_Analysis', ``, 'string') }}",
+            "Recommended Products": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Recommended_Products', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Recommendation ID",
+              "displayName": "Recommendation ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer",
+              "displayName": "Customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Request",
+              "displayName": "Request",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ChatGPT Analysis",
+              "displayName": "ChatGPT Analysis",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Recommended Products",
+              "displayName": "Recommended Products",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        840,
+        80
+      ],
+      "id": "bc27d5aa-1f46-4705-baf5-d7e3be0499a7",
+      "name": "Airtable4",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblifsTAzQwHmDp7N",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tblifsTAzQwHmDp7N"
+        },
+        "filterByFormula": "=",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        540
+      ],
+      "id": "72e4b1d1-ff25-4744-8fcb-3fa8274656f0",
+      "name": "Airtable6",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl972fe8qSRBmIbz",
+          "mode": "list",
+          "cachedResultName": "Complaint_Resolutions",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbl972fe8qSRBmIbz"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Resolution ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Resolution_ID', ``, 'string') }}",
+            "Customer": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer', ``, 'string') }}",
+            "Order Number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_Number', ``, 'string') }}",
+            "Complaint Type": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Complaint_Type', ``, 'string') }}",
+            "Severity": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Severity', ``, 'number') }}",
+            "Initial Emotion": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Initial_Emotion', ``, 'string') }}",
+            "Actions Taken": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Actions_Taken', ``, 'string') }}",
+            "Status": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Resolution ID",
+              "displayName": "Resolution ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer",
+              "displayName": "Customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Order Number",
+              "displayName": "Order Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Complaint Type",
+              "displayName": "Complaint Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Initial Emotion",
+              "displayName": "Initial Emotion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Actions Taken",
+              "displayName": "Actions Taken",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Compensation Value",
+              "displayName": "Compensation Value",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Final Emotion",
+              "displayName": "Final Emotion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Resolved At",
+              "displayName": "Resolved At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Resolved",
+                  "value": "Resolved"
+                },
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        940,
+        540
+      ],
+      "id": "a7d9bd0c-a222-4015-9ecf-4e2ce7a8ad64",
+      "name": "Airtable7",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl972fe8qSRBmIbz",
+          "mode": "list",
+          "cachedResultName": "Complaint_Resolutions",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbl972fe8qSRBmIbz"
+        },
+        "filterByFormula": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Filter_By_Formula', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        1000
+      ],
+      "id": "d0d9a595-d7a9-4078-b05b-8db8119251a4",
+      "name": "Airtable8",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl972fe8qSRBmIbz",
+          "mode": "list",
+          "cachedResultName": "Complaint_Resolutions",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbl972fe8qSRBmIbz"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Resolution ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Resolution_ID__using_to_match_', ``, 'string') }}",
+            "Final Emotion": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Final_Emotion', ``, 'string') }}",
+            "Resolved At": "={{$now.toISO()}}",
+            "Status": "Resolved"
+          },
+          "matchingColumns": [
+            "Resolution ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Resolution ID",
+              "displayName": "Resolution ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer",
+              "displayName": "Customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Order Number",
+              "displayName": "Order Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Complaint Type",
+              "displayName": "Complaint Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Initial Emotion",
+              "displayName": "Initial Emotion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Actions Taken",
+              "displayName": "Actions Taken",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Compensation Value",
+              "displayName": "Compensation Value",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Final Emotion",
+              "displayName": "Final Emotion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Resolved At",
+              "displayName": "Resolved At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Resolved",
+                  "value": "Resolved"
+                },
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        740,
+        1000
+      ],
+      "id": "742edbc0-d256-49a2-9d3e-4fdb52bf67e2",
+      "name": "Airtable9",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=작업:\n1. Complaint_Resolutions 테이블에서 Filter by Formula: {Resolution ID} = '{{ $('Switch').item.json.resolution_id }}'로 레코드 찾기\n2. 초기 감정과 최종 감정 비교\n3. 해결 품질 평가\n4. Complaint_Resolutions 업데이트 (Final Emotion: {{ $('Switch').item.json.final_emotion }}, Resolved At: {{$now.toFormat('yyyy-MM-dd')}}, Resolution Status: \"Resolved\")\n\nJSON 형식으로 응답하세요.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 Airtable에 직접 접근할 수 있는 AI 어시스턴트입니다.\n\n## 사용 가능한 테이블\n1. Complaint_Resolutions - 불만 처리 레코드 업데이트\n\n## 작업 순서\n1. Complaint_Resolutions 테이블에서 데이터 필터링\n2. 모든 정보를 종합하여 최적의 응답 생성\n3. Complaint_Resolutions 업데이트\n\nJSON 형식으로 응답하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        580,
+        800
+      ],
+      "id": "30e39c11-3c7a-4ec6-bf5e-aa9371ecec54",
+      "name": "complete_complaint_resolution1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=작업:\n1. Customers 테이블에서 Filter by Formula: {ID} = '{{ $('Switch').item.json.customer_id }}'로 고객 등급과 이력 분석\n2. Orders 테이블에서 Filter by Formula: {Order Number} = '{{ $('Switch').item.json.order_number }}'로 문제 주문 조회\n3. Complaint_Resolutions 테이블에서 Filter by Formula: {Customer} = '{{ $('Switch').item.json.customer_id }}'로 이전 불만 이력 확인 (Customer 필드가 customer_id와 일치하는 레코드를 불러옴)\n4. Complaint_Resolutions 테이블에 새 레코드 생성 (Resolution ID: RES_{{$now.toFormat('yyyyMMdd_HHmm')}})\n\n불만 내용: {{ $('Switch').item.json.complaint_type }}\n감정 상태: {{ $('Switch').item.json.initial_emotion }}\n\n분석하여:\n- Resolution ID 생성 (RES_{{$now.toFormat('yyyyMMdd_HHmm')}})\n- 즉시 실행할 조치 (string으로, 콤마 구분; 가능한 옵션: 환불, 교환, 쿠폰 발급, 무료 배송, 퀵서비스, 우선 처리, 사과 쿠폰 등 – 고객 등급에 따라 조정, e.g., VIP는 프리미엄 옵션 우선)\n- 고객 등급에 맞는 보상 (e.g., VIP: 50% 쿠폰, Gold: 30% 쿠폰, Silver: 10% 쿠폰)\n- Action Taken 에 정확히 어떤 보상줬는지 기재\n\nJSON 형식으로 응답하세요.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 Airtable에 직접 접근할 수 있는 AI 어시스턴트입니다.\n\n## 사용 가능한 테이블\n1. Customers - 고객 등급과 이력 확인\n2. Orders - 문제 주문 조회\n3. Complaint_Resolutions - 이전 불만 이력\n\n## 작업 순서\n1. Orders 테이블에서 데이터 필터링\n2. Complaint_Resolutions에 새 레코드 생성 (혹은 기존에 같은 Order number 에 대한 기존 complaint 고객이 마음에 들지 않을 시 새로운 보상으로 업데이트)\n3. 모든 정보를 종합하여 최적의 응답 생성\n\nJSON 형식으로 응답하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        580,
+        280
+      ],
+      "id": "77d31612-31b9-4a04-a16f-d7bde49594ce",
+      "name": "start_complaint_resolution1",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=작업:\n1. Customers 테이블에서 Filter by Formula: {ID} = '{{ $('Switch').item.json.customer_id }}'로 고객 구매 이력 조회\n2. Orders 테이블에서 Filter by Formula: {Customer} = '{{ $('Switch').item.json.customer_id }}'로 최근 구매 패턴 확인\n3. Products 테이블에서 Filter by Formula: {Stock} > 0로 재고 제품 매칭 (purpose={{ $('Switch').item.json.purpose }}, budget_range={{ $('Switch').item.json.budget_range }}, preferences={{ $('Switch').item.json.preferences }})\n4. AI_Recommendations 테이블에서 Filter by Formula: {Customer} = '{{ $('Switch').item.json.customer_id }}'로 이전 추천 중복 확인\n5. AI_Recommendations 테이블에 새 레코드 생성 (Recommendation ID: REC_{{$now.toFormat('yyyyMMdd_HHmm')}}, Customer: {{ $('Switch').item.json.customer_id }})\n\n고객 요청:\n- 용도: {{ $('Switch').item.json.purpose }}\n- 예산: {{ $('Switch').item.json.budget_range }}\n- 선호: {{ $('Switch').item.json.preferences }} (string, 콤마 구분으로 파싱)\n\n3개의 제품을 추천하되:\n- 고객의 평균 구매가 기준 -20%, 평균, +50% 가격대\n- 이전 구매와 어울리는 제품\n- 재고가 있는 제품만\n\nJSON 형식으로 응답하세요.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 Airtable에 직접 접근할 수 있는 AI 어시스턴트입니다.\n\n## 사용 가능한 테이블\n1. Customers - 고객 구매 이력 조회\n2. Orders - 최근 구매 패턴 확인\n3. Products - 재고 제품 매칭\n4. AI_Recommendations - 이전 추천 이력\n\n## 작업 순서\n1. Customers, Orders 테이블에서 고객 정보 필터링\n2. Products 테이블에서 매칭 제품 조회\n3. AI_Recommendations에서 중복 확인 및 새 레코드 생성\n4. 모든 정보를 종합하여 최적의 응답 생성\n\nJSON 형식으로 응답하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        580,
+        -220
+      ],
+      "id": "0c103ee1-fa8d-4fbc-b857-adf2201444e4",
+      "name": "ai_recommendation",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=작업:\n1. Customers 테이블에서 Name={{ $('Switch').item.json.name }} AND RIGHT(Phone, 4)={{ $('Switch').item.json.phone_last4 }}로 필터링\n2. 일치 시 ID 반환 (1,2,3 같은...)\n3. 불일치 시 에러 메시지\n\nJSON 형식으로 응답하세요.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "당신은 Airtable에 직접 접근할 수 있는 AI 어시스턴트입니다.\n\n## 사용 가능한 테이블\n1. Customers - 고객 정보 조회\n\n## 작업 순서\n1. Customers 테이블에서 데이터 필터링\n2. 모든 정보를 종합하여 최적의 응답 생성\n\nJSON 형식으로 응답하세요."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        580,
+        -620
+      ],
+      "id": "d9905007-7dc4-46b2-ad12-80e3bbe6f93d",
+      "name": "verify_customer"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        960,
+        -620
+      ],
+      "id": "1261830c-ff4e-4a11-9a7e-823541ce63dd",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        960,
+        -220
+      ],
+      "id": "ac73848f-3c79-4bf7-b793-ae35f2665311",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        960,
+        280
+      ],
+      "id": "cebc873d-521c-4b9d-9829-08cb33d32319",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        960,
+        800
+      ],
+      "id": "1768a924-2b3e-412e-b0a3-1a8322dcc782",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl972fe8qSRBmIbz",
+          "mode": "list",
+          "cachedResultName": "Complaint_Resolutions",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbl972fe8qSRBmIbz"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Resolution ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Resolution_ID', ``, 'string') }}",
+            "Customer": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer', ``, 'string') }}",
+            "Order Number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_Number', ``, 'string') }}",
+            "Complaint Type": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Complaint_Type', ``, 'string') }}",
+            "Severity": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Severity', ``, 'number') }}",
+            "Initial Emotion": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Initial_Emotion', ``, 'string') }}",
+            "Created At": "={{$now.toFormat('yyyy-MM-dd')}}",
+            "Actions Taken": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Actions_Taken', ``, 'string') }}",
+            "Compensation Value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Compensation_Value', ``, 'number') }}",
+            "Status": "Pending"
+          },
+          "matchingColumns": [
+            "Order Number"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Resolution ID",
+              "displayName": "Resolution ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer",
+              "displayName": "Customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Order Number",
+              "displayName": "Order Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Complaint Type",
+              "displayName": "Complaint Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Severity",
+              "displayName": "Severity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Initial Emotion",
+              "displayName": "Initial Emotion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Actions Taken",
+              "displayName": "Actions Taken",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Compensation Value",
+              "displayName": "Compensation Value",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Final Emotion",
+              "displayName": "Final Emotion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Resolved At",
+              "displayName": "Resolved At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Resolved",
+                  "value": "Resolved"
+                },
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        1060,
+        540
+      ],
+      "id": "bc042861-cfb3-4213-9572-fa91c6e48104",
+      "name": "Airtable10",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbldmS9lLGILaF200",
+          "mode": "list",
+          "cachedResultName": "Customers",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbldmS9lLGILaF200"
+        },
+        "filterByFormula": "={ID}='{{ $('Code').item.json.customer_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        540
+      ],
+      "id": "e5370b70-3a11-4fe6-8c4e-9856aad24435",
+      "name": "Airtable11",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appyI8ET2xEZUjjY0",
+          "mode": "list",
+          "cachedResultName": "보이스 AI 에이전트 자동화",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl972fe8qSRBmIbz",
+          "mode": "list",
+          "cachedResultName": "Complaint_Resolutions",
+          "cachedResultUrl": "https://airtable.com/appyI8ET2xEZUjjY0/tbl972fe8qSRBmIbz"
+        },
+        "filterByFormula": "={Customer}='{{ $('Code').item.json.customer_id }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        840,
+        540
+      ],
+      "id": "5aa89ed5-0665-4aa6-aa31-507748e0252a",
+      "name": "Airtable12",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "9DZ2pJpJcm3T20SA",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "verify_customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ai_recommendation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "complete_complaint_resolution1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "verify_customer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable1": {
+      "ai_tool": [
+        [
+          {
+            "node": "verify_customer",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "verify_customer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ai_recommendation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "ai_recommendation",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "complete_complaint_resolution1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "complete_complaint_resolution1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable": {
+      "ai_tool": [
+        [
+          {
+            "node": "ai_recommendation",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable2": {
+      "ai_tool": [
+        [
+          {
+            "node": "ai_recommendation",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable3": {
+      "ai_tool": [
+        [
+          {
+            "node": "ai_recommendation",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable4": {
+      "ai_tool": [
+        [
+          {
+            "node": "ai_recommendation",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable6": {
+      "ai_tool": [
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable7": {
+      "ai_tool": [
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable8": {
+      "ai_tool": [
+        [
+          {
+            "node": "complete_complaint_resolution1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable9": {
+      "ai_tool": [
+        [
+          {
+            "node": "complete_complaint_resolution1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verify_customer": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ai_recommendation": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "start_complaint_resolution1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "complete_complaint_resolution1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable10": {
+      "ai_tool": [
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable11": {
+      "ai_tool": [
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable12": {
+      "ai_tool": [
+        [
+          {
+            "node": "start_complaint_resolution1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "00c84b5b-4522-4da8-b499-269cb7c081bb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6584c3ee4a1bba8a530380aa4465cf16feecea86d0c373cc0dd44d8c1497f81e"
+  },
+  "id": "fwRkueNv00PMiuW1",
+  "tags": []
+}
